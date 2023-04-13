@@ -1,0 +1,67 @@
+.map-controls-container {
+    position: absolute;
+    top: 10px; left: 10px;
+    width: 320px; 
+    background-color: rgba(120, 120, 120, 0.5);
+    border-radius: 5px;
+    border-color: darkgray;
+    border-width: 1px;
+    z-index: 900;
+}
+
+.map-control-button {
+    position: absolute;
+    padding: 4px;
+    border-radius: 0;
+    background-color: lightgray;
+    border-color: gray;
+}
+
+.map-control-label {
+    position: absolute;
+    padding: 4px;
+    padding-top: 6px;
+    border-radius: 0;
+    background-color: lightgray;
+    border: 1px solid gray;
+    font-size: 0.9em;
+    text-align: center;
+}
+
+.map-control-title {
+    position: absolute;
+    padding: 4px;
+    border-radius: 0;
+    background-color: lightgray;
+    border: 1px solid gray;
+    font-size: 1em;
+    text-align: left;
+}
+
+.left-panel-title {
+    text-align: left;
+    border-bottom: 0.5px solid gray;
+}
+.boton-cerrar-offcanvas {
+    position: absolute;
+    right: 10px; top: 10px;
+    width: 40px;
+    height: 40px;
+}
+.map-control-layers-container {
+    position: absolute;
+}
+.map-controls-layer-row {
+    position: relative;
+    height: 35px;
+    padding: 4px;
+    border-radius: 0;
+    background-color: lightgray;
+}
+.map-control-layer-name {
+    font-size: 0.8em;
+    text-align: left;
+    border: 1px solid gray;
+    padding-top: 7px;
+    padding-left: 5px;
+}

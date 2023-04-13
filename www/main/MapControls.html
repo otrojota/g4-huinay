@@ -1,0 +1,44 @@
+<div id="controlsContainer" class="map-controls-container">
+    <button id="cmdZoomIn" class="btn btn-sm map-control-button" style="left:5px; top: 5px; width: 35px; height: 35px;">
+        <i class="fa-solid fa-plus"></i>
+    </button>
+    <button id="cmdZoomOut" class="btn btn-sm map-control-button" style="left:5px; top: 40px; width: 35px; height: 35px;">
+        <i class="fa-solid fa-minus"></i>
+    </button>
+    <!-- Día -->
+    <button id="cmdMonthMinus" class="btn btn-sm map-control-button" style="left:45px; top: 5px; width: 30px; height: 35px;">
+        <i class="fa-solid fa-caret-left"></i>
+    </button>
+    <button id="cmdDayMinus" class="btn btn-sm map-control-button" style="left:75px; top: 5px; width: 30px; height: 35px;">
+        <i class="fa-solid fa-angle-left"></i>
+    </button>
+    <div id="lblDay" class="map-control-label" style="left: 105px; top: 5px; width: 150px; height: 35px; ">99/MMM/9999</div>
+    <button id="cmdDayPlus" class="btn btn-sm map-control-button" style="left:255px; top: 5px; width: 30px; height: 35px;">
+        <i class="fa-solid fa-angle-right"></i>
+    </button>
+    <button id="cmdMonthPlus" class="btn btn-sm map-control-button" style="left:285px; top: 5px; width: 30px; height: 35px;">
+        <i class="fa-solid fa-caret-right"></i>
+    </button>
+    <!-- Hora -->
+    <button id="cmdHourMinus" class="btn btn-sm map-control-button" style="left:45px; top: 40px; width: 30px; height: 35px;">
+        <i class="fa-solid fa-caret-left"></i>
+    </button>
+    <button id="cmdMinuteMinus" class="btn btn-sm map-control-button" style="left:75px; top: 40px; width: 30px; height: 35px;">
+        <i class="fa-solid fa-angle-left"></i>
+    </button>
+    <div id="lblHour" class="map-control-label" style="left: 105px; top: 40px; width: 150px; height: 35px; ">99:99</div>
+    <button id="cmdMinutePlus" class="btn btn-sm map-control-button" style="left:255px; top: 40px; width: 30px; height: 35px;">
+        <i class="fa-solid fa-angle-right"></i>
+    </button>
+    <button id="cmdHourPlus" class="btn btn-sm map-control-button" style="left:285px; top: 40px; width: 30px; height: 35px;">
+        <i class="fa-solid fa-caret-right"></i>
+    </button>
+    <!-- Título -->
+    <div id="lblTitle" class="map-control-title" style="left: 5px; top: 80px; width: 280px; height: 35px; ">Capas Activas</div>
+    <button id="cmdConfigLayers" class="btn btn-sm map-control-button" style="left:285px; top: 80px; width: 30px; height: 35px;">
+        <i class="fa-solid fa-screwdriver-wrench"></i>
+    </button>
+    <!-- Contenedor de Capas -->
+    <div id="layersContainer" class="map-control-layers-container" data-z-repeat="./FilaCapa" style="left: 5px; top: 115px; width: 310px; height: 35px; ">
+    </div>
+</div>
