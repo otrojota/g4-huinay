@@ -37,44 +37,76 @@ class G4GeoJsonLayer extends G4Layer {
         try {
             super.g4init();
             // Leer jsonMetadata
-            this.metadata = await this.getFile(this.metadataURL)
+            this.metadata = await this.getFile(this.metadataURL)            
         } catch(error) {
             console.error(error);
         }
+    }
+
+    getPolygonBorderColor(feature) {
+        if (this.polygonsBorderColor === undefined) {
+            if (this.config.polygonsBorderColor === undefined) {
+                this.polygonsBorderColor = null;
+            } else if (Array.isArray(this.config.polygonsBorderColor)) {
+                this.polygonsBorderColor = this.config.polygonsBorderColor;
+            } else if (typeof(this.config.polygonsBorderColor) == "string") {
+                try {                    
+                    this.polygonsBorderColor = eval("(" + this.config.polygonsBorderColor + ")");
+                    if (typeof(this.polygonsBorderColor) != "function") throw "polygons border color no es una funcion"
+                } catch(error) {                    
+                    console.error(error);
+                    this.polygonsBorderColor = [255, 0, 0];
+                }
+            } else {
+                console.error("Tipo inesperado de polygonsBorderColor");
+                this.polygonsBorderColor = [255, 0, 0];
+            }            
+        }
+        if (this.polygonsBorderColor === null) return null;
+        let color;
+        if (Array.isArray(this.polygonsBorderColor)) color = this.polygonsBorderColor;
+        else color = this.polygonsBorderColor(feature);
+        return color;
+    }
+    getPolygonColor(feature) {
+        if (this.polygonsColor === undefined) {
+            if (this.config.polygonsColor === undefined) {
+                this.polygonsColor = null;
+            } else if (Array.isArray(this.config.polygonsColor)) {
+                this.polygonsColor = this.config.polygonsColor;
+            } else if (typeof(this.config.polygonsColor) == "string") {
+                try {                    
+                    this.polygonsColor = eval("(" + this.config.polygonsColor + ")");
+                    if (typeof(this.polygonsColor) != "function") throw "polygons color no es una funcion"
+                } catch(error) {                    
+                    console.error(error);
+                    this.polygonsColor = [255, 0, 0];
+                }
+            } else {
+                console.error("Tipo inesperado de polygonsColor");
+                this.polygonsColor = [255, 0, 0];
+            }            
+        }
+        if (this.polygonsColor === null) return null;
+        let color;
+        if (Array.isArray(this.polygonsColor)) color = this.polygonsColor;
+        else color = this.polygonsColor(feature);
+        return color;
     }
 
     async refresh() {
         try {
             // Leer geoJson y actualizar capa
             this.geoJson = await this.getFile(this.geoJsonURL);
-            if (this.subType == "polygons") {
-                // Transformar MultiPolygon a varios Polygon
-                let newFeatures = [];                                
-                for (let feature of this.geoJson.geoJson.features) {
-                    if (feature.geometry.type == "Polygon") {
-                        newFeatures.push(feature);
-                    } else if (feature.geometry.type == "MultiPolygon") {
-                        for (let coord of feature.geometry.coordinates) {
-                            newFeatures.push({geometry:{type:"Polygon", coordinates:coord, properties:feature.properties}})
-                        }
-                    } else {
-                        console.error("Geometry Type '" + feature.geometry.type + "' Not Handled");
-                    }
-                }
-                this.geoJson.geoJson.features = newFeatures;
-                
-                if (!this.shapesLayer) {
-                    this.shapesLayer = L.glify.latitudeFirst().shapes({
-                        map: window.g4.mapController.map,
-                        data: this.geoJson.geoJson,
-                        color: this.config.color,
-                        border: this.config.border,
-                        borderOpacity: this.config.borderOpacity
-                    })
-                } else {
-                    this.shapesLayer.setData(this.geoJson.geoJson);
-                }
+            
+            if (!this.geoJsonLayer) {
+                this.geoJsonLayer = new L.GeoJsonOverlay({
+                    polygonBorderColor: feature => (this.getPolygonBorderColor(feature)),
+                    polygonColor: feature => (this.getPolygonColor(feature))
+                });
+                this.geoJsonLayer.addTo(window.g4.mapController.map);
             }
+            this.geoJsonLayer.setGeoJson(this.geoJson.geoJson);
         } catch(error) {            
             console.error("Refresh error", error);            
         }

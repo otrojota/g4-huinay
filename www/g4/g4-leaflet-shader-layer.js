@@ -1,5 +1,6 @@
 L.ShaderOverlay = L.CanvasOverlay.extend({
     options: {        
+        getColor: function(v, lat, lng) {return [255,0,0,50]}
     },
   
     initialize: function (options) {
@@ -10,7 +11,7 @@ L.ShaderOverlay = L.CanvasOverlay.extend({
         this.options.drawCallback = (canvas, map) => this.drawCanvas(canvas, map);
         L.CanvasOverlay.prototype.onAdd.call(this, map);   
         this.box = null;
-        this.initWebGL();     
+        this.initWegGL();     
     },
     onRemove: function(map) {
         this.destroyWebGL();
@@ -97,24 +98,8 @@ L.ShaderOverlay = L.CanvasOverlay.extend({
         this.ncols = ncols;
         L.CanvasOverlay.prototype.redraw.call(this, map);   
     },
-    getColor:function(v, lat, lng) {
-
-    },
     drawCanvas(canvas, map) {
-        /*
-        let bounds = window.config.initialBounds;
-        let p0 = map.latLngToContainerPoint([bounds.n, bounds.w]);
-        let p1 = map.latLngToContainerPoint([bounds.s, bounds.e]);
-        var ctx = canvas.getContext("2d");
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (!this.box) return;
-
-        ctx.beginPath();
-        ctx.lineWidth = "5";
-        ctx.strokeStyle = "blue";
-        ctx.rect(p0.x, p0.y, (p1.x - p0.x), (p1.y - p0.y));
-        ctx.stroke();
-        */
+        if (!this.gl) return;
         if (!this.box || !this.rows) {
             const gl = this.gl;
             gl.clearColor(0, 0, 0, 0);
@@ -123,9 +108,9 @@ L.ShaderOverlay = L.CanvasOverlay.extend({
         }
         const nrows = this.nrows, ncols = this.ncols;
         const rows = this.rows;
-        const bounds = this.map.getBounds();
-        let p0 = this.toCanvas([bounds.getSouth(), bounds.getWest()]);
-        let p1 = this.toCanvas([bounds.getNorth(), bounds.getEast()]);
+        const bounds = map.getBounds();
+        let p0 = map.latLngToContainerPoint([bounds.getSouth(), bounds.getWest()]);
+        let p1 = map.latLngToContainerPoint([bounds.getNorth(), bounds.getEast()]);
 
         const gl = this.gl;
         gl.clearColor(0, 0, 0, 0);
@@ -144,20 +129,14 @@ L.ShaderOverlay = L.CanvasOverlay.extend({
                 let key = iRow + "-" + iCol;
                 let v = rows[iRow][iCol];
                 if (v !== null) {
-                    let p = this.toCanvas({lat, lng})
+                    let p = map.latLngToContainerPoint({lat, lng})
                     let x = (p.x - p0.x) / (p1.x - p0.x) * 2 - 1;
                     let y = (p.y - p0.y) / (p1.y - p0.y) * 2 - 1;
                     pointIndex[key] = vertexPositions.length / 2;
                     vertexPositions.push(x, y);                    
-                    let color = this.getColor(v, lat, lng);
-                    let colors = parseColor(color) || [0,0,0,0];
+                    let colors = this.options.getColor(v, lat, lng);
                     while (colors.length < 4) colors.push(255);                    
-                    let [r,g,b,a] = colors;
-                    if (typeof a == "string" && a.indexOf(".") >= 0) {
-                        a = parseFloat(a);
-                        if (a <= 1) a *= 255;
-                    }  else if (a <= 1) a *= 255
-                    vertexColors.push(r/255, g/255, b/255, a/255);
+                    vertexColors.push(colors[0]/255, colors[1]/255, colors[2]/255, colors[3]/255);
                 }
                 if (iRow < (nrows - 1) && iCol > 0) {
                     let keySE = key, idxSE = pointIndex[keySE], existeSE = idxSE !== undefined;

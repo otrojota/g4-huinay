@@ -69,14 +69,11 @@ class G4ColorScale {
         c = c.toLowerCase();
         if (!c.startsWith("rgb")) {
             console.error("No se puede interpretar '" + c + "' como un color rgb o rgba");
-            return {r:1, g:0, b:0, a:1}
+            return [255, 0, 0, 255]; 
         }
         let p0 = c.indexOf("(");
         let p1 = c.indexOf(")");
-        let parts = c.substring(p0+1, p1).split(",");
-        let o = {r:parts[0] / 255, g:parts[1] / 255, b:parts[2] / 255};
-        if (parts.length == 4) o.a = parts[3] / 255;
-        return o;
+        return c.substring(p0+1, p1).split(",");
     }
 }
 

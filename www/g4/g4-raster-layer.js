@@ -70,6 +70,7 @@ class G4RasterLayer extends G4Layer {
 
     async refresh() {
         try {
+            this.cancel();
             let drawPromises = [];
             if (this.config.shader && this.config.shader.active) {
                 drawPromises.push(this.drawShader());
@@ -80,7 +81,8 @@ class G4RasterLayer extends G4Layer {
             if (this.config.isolines && this.config.isolines.active) {
                 drawPromises.push(this.drawIsolines());
             }   
-            await Promise.all(drawPromises);
+            //await Promise.all(drawPromises);
+            Promise.all(drawPromises);
         } catch(error) {
             console.error(error);
         }
@@ -92,7 +94,6 @@ class G4RasterLayer extends G4Layer {
             this.gridCurrentController = new AbortController();
             try {
                 this.grid = await this.getFile(this.gridURL, this.gridCurrentController);
-                console.log("grid", this.grid);
                 if (!this.shaderColorScale) {
                     if (!this.config.shader.colorScale) throw "No hay 'colorScale' para la capa-shader";
                     this.shaderColorScale = window.g4.createColorScale(this.geoserverURL, this.config.shader.colorScale.name, this.config.shader.colorScale);
@@ -100,8 +101,8 @@ class G4RasterLayer extends G4Layer {
                 this.shaderColorScale.setRange(this.grid.min, this.grid.max);
                 if (!this.shaderLayer) {
                     this.shaderLayer = new L.ShaderOverlay({
-                        getPointValue:value => {
-                            return 
+                        getColor: (v, lat, lng) => {
+                            return this.shaderColorScale.getColorObject(v);
                         }
                     });
                     this.shaderLayer.addTo(window.g4.mapController.map);
@@ -127,19 +128,6 @@ class G4RasterLayer extends G4Layer {
             this.isobandsCurrentController = new AbortController();
             try {
                 this.isobandsGeoJson = await this.getFile(this.isobandsURL, this.isobandsCurrentController);
-                let newFeatures = [];                                
-                for (let feature of this.isobandsGeoJson.geoJson.features) {
-                    if (feature.geometry.type == "Polygon") {
-                        newFeatures.push(feature);
-                    } else if (feature.geometry.type == "MultiPolygon") {
-                        for (let coord of feature.geometry.coordinates) {
-                            newFeatures.push({geometry:{type:"Polygon", coordinates:coord, properties:feature.properties}})
-                        }
-                    } else {
-                        console.error("Geometry Type '" + feature.geometry.type + "' Not Handled");
-                    }
-                }
-                this.isobandsGeoJson.geoJson.features = newFeatures;
             } catch(error) {
                 if (this.isobandsLayer) {
                     this.isobandsLayer.remove();
@@ -155,17 +143,15 @@ class G4RasterLayer extends G4Layer {
             }
             this.isobandsColorScale.setRange(this.isobandsGeoJson.min, this.isobandsGeoJson.max);
             if (!this.isobandsLayer) {
-                this.isobandsLayer = L.glify.shapes({
-                    map: window.g4.mapController.map,
-                    data: this.isobandsGeoJson.geoJson,
-                    color: (idx, feature) => {
+                this.isobandsLayer = new L.GeoJsonOverlay({
+                    polygonColor: feature => {
                         if (feature.geometry.properties) return this.isobandsColorScale.getColorObject((feature.geometry.properties.minValue + feature.geometry.properties.maxValue) / 2);
-                        return {r:1, g:0, b:0, a:0.5}
+                        return [255,0,0,0.5]
                     }
                 })
-            } else {
-                this.isobandsLayer.setData(this.isobandsGeoJson.geoJson);
-            }     
+                this.isobandsLayer.addTo(window.g4.mapController.map);
+            }            
+            this.isobandsLayer.setGeoJson(this.isobandsGeoJson.geoJson);
         } catch (error) {
             throw error;
         }
@@ -186,16 +172,16 @@ class G4RasterLayer extends G4Layer {
             } finally {
                 this.isolinesCurrentController = null;
             }
-            if (!this.isolinesLayer) {
-                this.isolinesLayer = L.glify.longitudeFirst().lines({
-                    map: window.g4.mapController.map,
-                    data: this.isolinesGeoJson.geoJson,
-                    color: this.config.isolines.color,
-                    weight: this.config.isolines.weight || 0.4
+            if (!this.isolinesLayer) {                
+                this.isolinesLayer = new L.GeoJsonOverlay({
+                    lineColor: feature => {                        
+                        return this.config.isolines.color;
+                    },
+                    smoothLines: true
                 })
-            } else {
-                this.isolinesLayer.setData(this.isolinesGeoJson.geoJson);
+                this.isolinesLayer.addTo(window.g4.mapController.map);
             } 
+            this.isolinesLayer.setGeoJson(this.isolinesGeoJson.geoJson);
         } catch (error) {
             throw error;
         }
@@ -204,5 +190,6 @@ class G4RasterLayer extends G4Layer {
     cancel() {
         if (this.isolinesCurrentController) this.isolinesCurrentController.abort();
         if (this.isobandsCurrentController) this.isobandsCurrentController.abort();
+        if (this.gridCurrentController) this.gridCurrentController.abort();
     }
 }
