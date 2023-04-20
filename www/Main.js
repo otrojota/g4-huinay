@@ -31,8 +31,10 @@ class Main extends ZCustomController {
     }
 
     onCmdCloseLeftPanel_click() {this.closeLeftPanel()}
-    async loadLeftPanel(path, options, width = 250) {
+    async loadLeftPanel(path, options, title, width = 350) {
+        this.lblLeftPanelTitle.text = title;        
         this.leftPanelLoader.hide();
+        this.leftPanel.view.style.width = width + "px";
         await this.leftPanelLoader.load(path, options);
         this.leftPanelLoader.show();
         this.leftOffsetCanvas.show();

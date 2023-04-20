@@ -25,6 +25,42 @@ class MapControls extends ZCustomController {
         window.g4.on("time-change", async _ => {
             this.refreshTime();
         })
+
+        this.layersContainer.view.addEventListener("mousemove", e => {
+            if (this.draggingElement) {
+                let y = e.pageY;
+                this.draggingElement.style.top = (this.draggingY0 + (y - this.draggingMouseY0)) + "px";
+                let cy = e.clientY - this.layersContainer.view.offsetTop;
+                let dragPosIdx = parseInt((cy -15) / 35);
+                let n = this.layersContainer.controllers.length;
+                if (dragPosIdx < 0) dragPosIdx = 0;
+                if (dragPosIdx >= n) dragPosIdx = n-1;
+                if (dragPosIdx != this.dragPosIdx) {
+                    this.dragPosIdx = dragPosIdx;
+                    for (let fila of this.layersContainer.controllers) {
+                        fila.filaContainer.view.classList.remove("drop-target");
+                    }                    
+                    this.layersContainer.controllers[this.dragPosIdx].filaContainer.view.classList.add("drop-target");
+                }
+            }
+        });
+        this.layersContainer.view.addEventListener("mouseup", e => {
+            if (!this.draggingElement) return;
+            if (this.dragPosIdx >= 0 && this.dragPosIdx < this.layersContainer.controllers.length && this.dragPosIdx != this.draggingIndex) {
+                let n = this.layersContainer.controllers.length - 1;
+                window.g4.getActiveGroup().reorderLayer(n - this.draggingIndex, n - this.dragPosIdx);
+            }
+            this.draggingElement = null;
+            this.refreshLayers();
+        });
+        this.layersContainer.view.addEventListener("mouseleave", e => {
+            return;
+            if (this.draggingElement) {
+                this.draggingElement = null;
+                this.dragPosIdx = -1;
+                this.refreshLayers();
+            }
+        });
         this.refreshLayers();
     }
 
@@ -37,7 +73,11 @@ class MapControls extends ZCustomController {
     onCmdZoomOut_click() {window.g4.mapController.zoomOut()}
 
     async onCmdConfigLayers_click() {
-        await window.g4.mainController.loadLeftPanel("main/config-panels/CapasActivas");
+        await window.g4.mainController.loadLeftPanel("main/config-panels/MultiPanelsLoader",{
+            panels:[{
+                panel:"./OpacidadCapas", panelOptions:{}, title:"Opacidad Capas"
+            }]
+        }, "Capas Activas");
     }
 
     callRefreshLayers() {
@@ -50,10 +90,13 @@ class MapControls extends ZCustomController {
     refreshLayers() {
         let layers = window.g4.getActiveGroup().layers;
         this.controlsContainer.view.style.height = (120 + layers.length * 35) + "px";
+        this.layersContainer.view.style.height = (layers.length * 35) + "px";
         this.layersContainer.refresh();
     }
     onLayersContainer_getRows() {
-        return window.g4.getActiveGroup().layers;
+        let rows = [...window.g4.getActiveGroup().layers];
+        rows.sort((l1, l2) => (l2.getOrder() - l1.getOrder()));
+        return rows;
     }
     async layerStatusChange(layer) {
         let controller = this.layersContainer.controllers.find(c => (c.layer.id == layer.id));
@@ -70,5 +113,27 @@ class MapControls extends ZCustomController {
     async onCmdHourMinus_click() {await window.g4.incTime({hours:-1})}
     async onCmdMinutePlus_click() {await window.g4.incTime({minutes:15})}
     async onCmdMinuteMinus_click() {await window.g4.incTime({minutes:-15})}
+
+    // Reorder layers
+    onLayersContainer_dragStart(fila) {
+        let left = fila.view.offsetLeft; // rect.left + window.scrollX;
+        let top = fila.view.offsetTop;   // rect.top + window.scrollY;
+        fila.view.style.opacity = "0.2";
+        this.dragging = fila;
+        this.draggingY0 = top;
+        this.draggingMouseY0 = fila.y0;
+        this.draggingIndex = fila.repeaterIndex;
+        this.draggingElement = document.createElement("div");
+        this.layersContainer.view.appendChild(this.draggingElement);
+        this.draggingElement.id = "dragFila";
+        this.draggingElement.innerHTML = fila.view.innerHTML;
+        this.draggingElement.style.position = "absolute";
+        this.draggingElement.style.left = left + "px";
+        this.draggingElement.style.top = top + "px";
+        this.draggingElement.style.width = fila.view.offsetWidth + "px";
+        this.draggingElement.style.height = fila.view.offsetHeight + "px";
+        this.draggingElement.style["z-index"] = "99999";
+        this.dragPosIdx = -1;
+    }
 }
 ZVC.export(MapControls);

@@ -11,6 +11,7 @@ class G4Map extends ZCustomController {
         this.map.fitBounds(bounds);
         this.map.on("zoomend", _ => this.callTriggerMapChange());
         this.map.on("moveend", _ => this.callTriggerMapChange());
+        this.map.on("click", e => window.g4.trigger("map-click", e));
     }
 
     zoomIn() {this.map.zoomIn()}

@@ -21,7 +21,7 @@ L.GeoJsonOverlay = L.CanvasOverlay.extend({
         L.CanvasOverlay.prototype.onRemove.call(this, map);        
     },
     initWegGL: function() {
-        this.gl = this._canvas.getContext('webgl', {antialiasing: false});
+        this.gl = this._canvas.getContext('webgl', {antialiasing: true});
         const gl = this.gl;
         /*
            Polygon Borders 
@@ -198,6 +198,7 @@ L.GeoJsonOverlay = L.CanvasOverlay.extend({
         this.polygons = null;
         this.lines = null;
         this.points = null;
+        this.polygonLookup = null;
         this.geoJson = geoJson;
         if (!geoJson) {
             L.CanvasOverlay.prototype.redraw.call(this, map);
@@ -278,9 +279,13 @@ L.GeoJsonOverlay = L.CanvasOverlay.extend({
             } else {
                 //console.error("geometria no manejada", geom.type);
             }
-        }
+        }        
 
         L.CanvasOverlay.prototype.redraw.call(this, map);   
+        if (this.polygons) {
+            let PolygonLookup = require("polygon-lookup");
+            this.polygonLookup = new PolygonLookup({type:"FeatureCollection", features})            
+        }
     },
     drawCanvas(canvas, map) {
         if (!this.gl) return;
@@ -437,6 +442,10 @@ L.GeoJsonOverlay = L.CanvasOverlay.extend({
             // Dibujar bordes
             gl.drawArrays(gl.LINES, 0, linePoints.length / 3);
         }
+    },
+    findPolygon:function(lat, lng) {
+        if (!this.polygonLookup) return null;
+        return this.polygonLookup.search(lng, lat);
     }
 })
 

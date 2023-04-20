@@ -23,6 +23,12 @@ class G4RasterLayer extends G4Layer {
         if (this.dependsOnTime) url += "&time=" + window.g4.time.valueOf();
         return url;
     }
+    get vectorsGridURL() {
+        let b = window.g4.mapController.getCurrentBounds(0.25);
+        let url = `${this.geoserverURL}/${this.dataSetCode}/${this.variableCode}/vectorsGrid?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}`;
+        if (this.dependsOnTime) url += "&time=" + window.g4.time.valueOf();
+        return url;
+    }
 
     constructor(name, config) {
         super(null, name);
@@ -41,6 +47,14 @@ class G4RasterLayer extends G4Layer {
         if (this.isobandsLayer) {
             this.isobandsLayer.remove();
             this.isobandsLayer = null;
+        }
+        if (this.shaderLayer) {
+            this.shaderLayer.remove();
+            this.shaderLayer = null;
+        }
+        if (this.particlesLayer) {
+            this.particlesLayer.remove();
+            this.particlesLayer = null;
         }
     }
 
@@ -62,6 +76,7 @@ class G4RasterLayer extends G4Layer {
             let {dataSet, variable} = await window.g4.getGeoserverVariableMetadata(this.geoserverURL, this.dataSetCode, this.variableCode);
             this.dataSet = dataSet;
             this.variable = variable;
+            if (this.config.opacity) this._opacity = this.config.opacity;
             if (this.dependsOnTime) window.g4.on("time-change", this.timeChangeListener);
         } catch(error) {
             console.error(error);
@@ -74,6 +89,12 @@ class G4RasterLayer extends G4Layer {
             let drawPromises = [];
             if (this.config.shader && this.config.shader.active) {
                 drawPromises.push(this.drawShader());
+            }
+            if (this.config.particles && this.config.particles.active) {
+                drawPromises.push(this.drawParticles());
+            }
+            if (this.config.vectors && this.config.vectors.active) {
+                drawPromises.push(this.drawVectors());
             }            
             if (this.config.isobands && this.config.isobands.active) {
                 drawPromises.push(this.drawIsobands());
@@ -103,7 +124,9 @@ class G4RasterLayer extends G4Layer {
                     this.shaderLayer = new L.ShaderOverlay({
                         getColor: (v, lat, lng) => {
                             return this.shaderColorScale.getColorObject(v);
-                        }
+                        },
+                        zIndex:(this.getOrder() >= 0)?200 + 10 *this.getOrder():-1,
+                        opacity: this.getOpacity()
                     });
                     this.shaderLayer.addTo(window.g4.mapController.map);
                 }    
@@ -117,6 +140,74 @@ class G4RasterLayer extends G4Layer {
                 return;
             } finally {
                 this.gridCurrentController = null;
+            }
+        } catch (error) {
+            throw error;
+        }
+    }
+    async drawParticles() {
+        try {
+            // Leer grid y actualizar capa
+            this.particlesCurrentController = new AbortController();
+            try {
+                this.vectorsGrid = await this.getFile(this.vectorsGridURL, this.particlesCurrentController);
+                if (!this.particlesLayer) {
+                    let opts = {
+                        zIndex:(this.getOrder() >= 0)?203 + 10 *this.getOrder():-1,
+                        opacity: this.getOpacity()                        
+                    }                    
+                    if (this.config.particles.color) opts.color = this.config.particles.color;
+                    if (this.config.particles.particles) opts.paths = this.config.particles.particles;
+                    if (this.config.particles.width) opts.width = this.config.particles.width;
+                    if (this.config.particles.fade) opts.fade = this.config.particles.fade;
+                    if (this.config.particles.duration) opts.duration = this.config.particles.duration;
+                    if (this.config.particles.maxAge) opts.maxAge = this.config.particles.maxAge;
+                    if (this.config.particles.velocityScale) opts.velocityScale = this.config.particles.velocityScale;
+                    
+                    this.particlesLayer = new L.ParticlesOverlay(opts);
+                    this.particlesLayer.addTo(window.g4.mapController.map);
+                }    
+                this.particlesLayer.setVectorsGridData(this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.nrows, this.vectorsGrid.ncols);
+            } catch(error) {
+                console.error(error);
+                if (this.particlesLayer) {
+                    this.particlesLayer.remove();
+                    this.particlesLayer = null;
+                }
+                return;
+            } finally {
+                this.particlesCurrentController = null;
+            }
+        } catch (error) {
+            throw error;
+        }
+    }
+    async drawVectors() {
+        try {
+            // Leer grid y actualizar capa
+            this.vectorsCurrentController = new AbortController();
+            try {
+                this.vectorsGrid = await this.getFile(this.vectorsGridURL, this.vectorsCurrentController);
+                if (!this.vectorsLayer) {
+                    let opts = {
+                        zIndex:(this.getOrder() >= 0)?204 + 10 *this.getOrder():-1,
+                        opacity: this.getOpacity()                        
+                    }                    
+                    if (this.config.vectors.color) opts.color = this.config.vectors.color;
+                    
+                    this.vectorsLayer = new L.VectorsOverlay(opts);
+                    this.vectorsLayer.addTo(window.g4.mapController.map);
+                }    
+                this.vectorsLayer.setVectorsGridData(this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.nrows, this.vectorsGrid.ncols);
+            } catch(error) {
+                console.error(error);
+                if (this.vectorsLayer) {
+                    this.vectorsLayer.remove();
+                    this.vectorsLayer = null;
+                }
+                return;
+            } finally {
+                this.vectorsCurrentController = null;
             }
         } catch (error) {
             throw error;
@@ -147,7 +238,9 @@ class G4RasterLayer extends G4Layer {
                     polygonColor: feature => {
                         if (feature.geometry.properties) return this.isobandsColorScale.getColorObject((feature.geometry.properties.minValue + feature.geometry.properties.maxValue) / 2);
                         return [255,0,0,0.5]
-                    }
+                    },
+                    zIndex:(this.getOrder() >= 0)?201 + 10 *this.getOrder():-1,
+                    opacity: this.getOpacity()
                 })
                 this.isobandsLayer.addTo(window.g4.mapController.map);
             }            
@@ -177,7 +270,9 @@ class G4RasterLayer extends G4Layer {
                     lineColor: feature => {                        
                         return this.config.isolines.color;
                     },
-                    smoothLines: true
+                    smoothLines: true,
+                    zIndex:(this.getOrder() >= 0)?202 + 10 *this.getOrder():-1,
+                    opacity: this.getOpacity()
                 })
                 this.isolinesLayer.addTo(window.g4.mapController.map);
             } 
@@ -187,9 +282,27 @@ class G4RasterLayer extends G4Layer {
         }
     }
 
+    resetOrder() {
+        if (this.shaderLayer) this.shaderLayer.setZIndex((this.getOrder() >= 0)?200 + 10 *this.getOrder():-1);        
+        if (this.isobandsLayer) this.isobandsLayer.setZIndex((this.getOrder() >= 0)?201 + 10 *this.getOrder():-1);
+        if (this.isolinesLayer) this.isolinesLayer.setZIndex((this.getOrder() >= 0)?202 + 10 *this.getOrder():-1);
+        if (this.particlesLayer) this.particlesLayer.setZIndex((this.getOrder() >= 0)?203 + 10 *this.getOrder():-1);
+        if (this.vectorsLayer) this.vectorsLayer.setZIndex((this.getOrder() >= 0)?204 + 10 *this.getOrder():-1);
+    }
+    setOpacity(o) {
+        this._opacity = o;
+        if (this.shaderLayer) this.shaderLayer.setOpacity(o);
+        if (this.isobandsLayer) this.isobandsLayer.setOpacity(o);
+        if (this.isolinesLayer) this.isolinesLayer.setOpacity(o);
+        if (this.particlesLayer) this.particlesLayer.setOpacity(o);
+        if (this.vectorsLayer) this.vectorsLayer.setOpacity(o);
+    }
+
     cancel() {
         if (this.isolinesCurrentController) this.isolinesCurrentController.abort();
         if (this.isobandsCurrentController) this.isobandsCurrentController.abort();
         if (this.gridCurrentController) this.gridCurrentController.abort();
+        if (this.particlesCurrentController) this.particlesCurrentController.abort();
+        if (this.vectorsCurrentController) this.vectorsCurrentController.abort();
     }
 }

@@ -10,6 +10,8 @@ class G4 {
         this.groups = [];               // {id:"guid", name: "", layers:[layer, ...]}
         this.geoServersMetadata = {};   // {url: metadata}
         this.geoServersColorScales = {};// {url: ScalesFactory}
+
+        this.on("map-click", e => this.onMapClick(e));
     }
 
     // Centralized Event Handling
@@ -123,6 +125,14 @@ class G4 {
         let scaleDef = factory.byName(scaleName);
         if (!scaleDef) throw "No se encontró la escala de colores '" + scaleName + "' en el servidor"
         return factory.createScale(scaleDef, scaleConfig);
+    }
+
+    onMapClick(e) {
+        for (let l of this.getLayers()) {
+            console.time("search");
+            let found = l.mapClick(e);
+            console.timeEnd("search");
+        }
     }
 }
 window.g4 = new G4();

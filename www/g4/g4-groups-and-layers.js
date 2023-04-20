@@ -10,8 +10,22 @@ class G4Group {
     }
 
     async addLayer(layer) {
+        layer.group = this;
         this.layers.push(layer);
+        layer.resetOrder();
         await window.g4.trigger("layer-added", layer);
+    }
+    getLayerOrder(layer) {
+        let idx = this.layers.indexOf(layer);
+        return idx;
+    }
+    reorderLayer(fromIndex, toIndex) {
+        let [layer] = this.layers.splice(fromIndex, 1);
+        let idx = toIndex;
+        if (toIndex < fromIndex) idx++;
+        this.layers.splice(idx, 0, layer);
+        for (let layer of this.layers) layer.resetOrder();
+        window.g4.trigger("layers-reodered");
     }
 }
 
@@ -41,6 +55,7 @@ class G4Layer {
         this.nWorking = 0;
         this._status = "?";
         this.error = null;
+        this._opacity = 1;
     }
 
     get type() {
@@ -126,4 +141,20 @@ class G4Layer {
                 });
         })
     }
+
+    getOrder() {
+        if (!this.group) return -1;
+        return this.group.getLayerOrder(this);
+    }
+    resetOrder() {
+        console.error("resetOrder no sobreescrito en capa", this); 
+    }
+
+    getOpacity() {
+        return this._opacity;
+    }
+    setOpacity(o) {
+        console.error("setOpacity no sobreescrito en capa", this); 
+    }
+    mapClick(e) {}
 }

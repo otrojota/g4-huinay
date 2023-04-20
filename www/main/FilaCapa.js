@@ -3,6 +3,22 @@ class FilaCapa extends ZCustomController {
         this.layer = layer;
         this.lblLayerName.text = this.layer.name;
         this.refreshStatus();
+        this.cursorInside = false;
+        this.mouseDown = false;
+        this.dragging = false;
+        this.lblLayerName.view.addEventListener("mousedown", e => {
+            this.mouseDown = true;
+        })
+        this.lblLayerName.view.addEventListener("mouseup", e => {
+            this.mouseDown = false;
+        })
+        this.lblLayerName.view.addEventListener("mousemove", e => {
+            if (this.mouseDown && !this.dragging) {
+                this.dragging = true;
+                this.y0 = e.pageY;
+                this.triggerEvent("dragStart", this);
+            }
+        })
     }
 
     refreshStatus() {

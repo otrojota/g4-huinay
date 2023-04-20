@@ -1,15 +1,15 @@
 <div style="height: 100%;">
-    <div id="leftPanel" class="offcanvas offcanvas-start" tabindex="-1" data-bs-backdrop="false">
+    <div id="leftPanel" class="offcanvas offcanvas-start left-panel-container" tabindex="-1" data-bs-backdrop="false">
         <div id="leftPanelTitle" class="left-panel-title p-2">
             <h4 id="lblLeftPanelTitle" class="mt-2">Título del Panel Izquierdo</h4>
             <button id="cmdCloseLeftPanel" class="btn btn-sm boton-cerrar-offcanvas">
                 <i class="fa-solid fa-xmark fa-2x"></i>
             </button>
         </div>
-        <div id="leftPanelLoader" class="left-panel-container" data-z-load="common/Empty"></div>
+        <div id="leftPanelLoader" class="left-panel-content" data-z-load="common/Empty"></div>
     </div>
-    <div id="rightPanel" class="offcanvas offcanvas-end" tabindex="-1" data-bs-backdrop="false">
-        <div id="rightPanelLoader" class="right-panel-container" data-z-load="common/Empty"></div>
+    <div id="rightPanel" class="offcanvas offcanvas-end right-panel-container" tabindex="-1" data-bs-backdrop="false">
+        <div id="rightPanelLoader" data-z-load="common/Empty"></div>
     </div>
     <div id="map" data-z-component="./g4/G4Map" style="height: 100%;"></div>
     <div id="controls" data-z-component="./main/MapControls"></div>

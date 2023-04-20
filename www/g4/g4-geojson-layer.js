@@ -37,6 +37,7 @@ class G4GeoJsonLayer extends G4Layer {
         try {
             super.g4init();
             // Leer jsonMetadata
+            if (this.config.opacity) this._opacity = this.config.opacity;
             this.metadata = await this.getFile(this.metadataURL)            
         } catch(error) {
             console.error(error);
@@ -102,7 +103,9 @@ class G4GeoJsonLayer extends G4Layer {
             if (!this.geoJsonLayer) {
                 this.geoJsonLayer = new L.GeoJsonOverlay({
                     polygonBorderColor: feature => (this.getPolygonBorderColor(feature)),
-                    polygonColor: feature => (this.getPolygonColor(feature))
+                    polygonColor: feature => (this.getPolygonColor(feature)),
+                    zIndex:(this.getOrder() >= 0)?200 + 10 *this.getOrder():-1,
+                    opacity: this.getOpacity()
                 });
                 this.geoJsonLayer.addTo(window.g4.mapController.map);
             }
@@ -111,8 +114,21 @@ class G4GeoJsonLayer extends G4Layer {
             console.error("Refresh error", error);            
         }
     }
-
+    resetOrder() {
+        if (this.geoJsonLayer) this.geoJsonLayer.setZIndex((this.getOrder() >= 0)?200 + 10 *this.getOrder():-1);
+    }
+    setOpacity(o) {
+        this._opacity = o;
+        if (this.geoJsonLayer) this.geoJsonLayer.setOpacity(o);
+    }
     cancel() {
         if (this.currentController) this.currentController.abort();
+    }
+    mapClick(e) {
+        console.log("e", e);
+        if (this.geoJsonLayer) {
+            let polygon = this.geoJsonLayer.findPolygon(e.latlng.lat, e.latlng.lng);
+            console.log("polygon", polygon);
+        }
     }
 }
