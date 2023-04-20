@@ -56,6 +56,14 @@ class G4RasterLayer extends G4Layer {
             this.particlesLayer.remove();
             this.particlesLayer = null;
         }
+        if (this.vectorsLayer) {
+            this.vectorsLayer.remove();
+            this.vectorsLayer = null;
+        }
+        if (this.barbsLayer) {
+            this.barbsLayer.remove();
+            this.barbsLayer = null;
+        }
     }
 
     getFile(url, controller) {
@@ -95,6 +103,9 @@ class G4RasterLayer extends G4Layer {
             }
             if (this.config.vectors && this.config.vectors.active) {
                 drawPromises.push(this.drawVectors());
+            }            
+            if (this.config.barbs && this.config.barbs.active) {
+                drawPromises.push(this.drawBarbs());
             }            
             if (this.config.isobands && this.config.isobands.active) {
                 drawPromises.push(this.drawIsobands());
@@ -213,6 +224,37 @@ class G4RasterLayer extends G4Layer {
             throw error;
         }
     }
+    async drawBarbs() {
+        try {
+            // Leer grid y actualizar capa
+            this.barbsCurrentController = new AbortController();
+            try {
+                this.vectorsGrid = await this.getFile(this.vectorsGridURL, this.barbsCurrentController);
+                if (!this.barbsLayer) {
+                    let opts = {
+                        zIndex:(this.getOrder() >= 0)?205 + 10 *this.getOrder():-1,
+                        opacity: this.getOpacity()                        
+                    }                    
+                    if (this.config.barbs.color) opts.color = this.config.barbs.color;
+                    
+                    this.barbsLayer = new L.BarbsOverlay(opts);
+                    this.barbsLayer.addTo(window.g4.mapController.map);
+                }    
+                this.barbsLayer.setVectorsGridData(this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.nrows, this.vectorsGrid.ncols);
+            } catch(error) {
+                console.error(error);
+                if (this.barbsLayer) {
+                    this.barbsLayer.remove();
+                    this.barbsLayer = null;
+                }
+                return;
+            } finally {
+                this.barbsCurrentController = null;
+            }
+        } catch (error) {
+            throw error;
+        }
+    }
     async drawIsobands() {
         try {
             // Leer geoJson y actualizar capa
@@ -270,7 +312,7 @@ class G4RasterLayer extends G4Layer {
                     lineColor: feature => {                        
                         return this.config.isolines.color;
                     },
-                    smoothLines: true,
+                    smoothLines: false,
                     zIndex:(this.getOrder() >= 0)?202 + 10 *this.getOrder():-1,
                     opacity: this.getOpacity()
                 })
@@ -288,6 +330,7 @@ class G4RasterLayer extends G4Layer {
         if (this.isolinesLayer) this.isolinesLayer.setZIndex((this.getOrder() >= 0)?202 + 10 *this.getOrder():-1);
         if (this.particlesLayer) this.particlesLayer.setZIndex((this.getOrder() >= 0)?203 + 10 *this.getOrder():-1);
         if (this.vectorsLayer) this.vectorsLayer.setZIndex((this.getOrder() >= 0)?204 + 10 *this.getOrder():-1);
+        if (this.barbsLayer) this.barbsLayer.setZIndex((this.getOrder() >= 0)?205 + 10 *this.getOrder():-1);
     }
     setOpacity(o) {
         this._opacity = o;
@@ -296,6 +339,7 @@ class G4RasterLayer extends G4Layer {
         if (this.isolinesLayer) this.isolinesLayer.setOpacity(o);
         if (this.particlesLayer) this.particlesLayer.setOpacity(o);
         if (this.vectorsLayer) this.vectorsLayer.setOpacity(o);
+        if (this.barbsLayer) this.barbsLayer.setOpacity(o);
     }
 
     cancel() {
@@ -304,5 +348,6 @@ class G4RasterLayer extends G4Layer {
         if (this.gridCurrentController) this.gridCurrentController.abort();
         if (this.particlesCurrentController) this.particlesCurrentController.abort();
         if (this.vectorsCurrentController) this.vectorsCurrentController.abort();
+        if (this.barbsCurrentController) this.barbsCurrentController.abort();
     }
 }

@@ -124,10 +124,10 @@ L.VectorsOverlay = L.CanvasOverlay.extend({
         const w = (p1.x - p0.x);
         const h = (p1.y - p0.y);
                 
-        // Calcular largo máximo de una linea en escala 0-1 (webGL)
+        // Calcular largo máximo de una linea
         let boxP0 = map.latLngToContainerPoint([this.box.lat0, this.box.lng0]);
         let boxP1 = map.latLngToContainerPoint([this.box.lat1, this.box.lng1]);
-        let maxLen = Math.min((boxP1.x - boxP0.x) / this.nCols, (boxP1.y - boxP0.y) / this.nRows);
+        let maxLen = Math.min((boxP1.x - boxP0.x) / this.nCols, (boxP0.y - boxP1.y) / this.nRows);
 
 
         let rotate = (s, c, p, a) => {
@@ -150,7 +150,7 @@ L.VectorsOverlay = L.CanvasOverlay.extend({
                 let v = this.rowsV[iRow][iCol];
                 if (u !== null && v !== null) {
                     let m = this.rowsMagnitudes[iRow][iCol];
-                    let angle = Math.atan2(u, v) + Math.PI / 2;
+                    let angle = Math.atan2(u, v) - Math.PI / 2;
                     let scale = 0.3 + 0.65 * (m -this.minMagnitud) / (this.maxMagnitud - this.minMagnitud);
                     if (isNaN(scale)) scale = 1;
                     let len = maxLen * scale;
