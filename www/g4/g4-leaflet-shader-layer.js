@@ -1,6 +1,7 @@
 L.ShaderOverlay = L.CanvasOverlay.extend({
     options: {        
-        getColor: function(v, lat, lng) {return [255,0,0,50]}
+        getColor: function(v, lat, lng) {return [255,0,0,50]},
+        interpolate: null   // {minCols:150, minRows: 150}
     },
   
     initialize: function (options) {
@@ -98,6 +99,22 @@ L.ShaderOverlay = L.CanvasOverlay.extend({
         this.ncols = ncols;
         L.CanvasOverlay.prototype.redraw.call(this, map);   
     },
+    interpolate(lat, lng, box, rows, nCols, nRows) {
+        // https://en.wikipedia.org/wiki/Bilinear_interpolation                    
+        if (lat <= box.lat0 || lat >= box.lat1 || lng <= box.lng0 || lng >= box.lng1) return null;
+        let i = parseInt((lng - box.lng0) / box.dLng);
+        let j = parseInt((lat - box.lat0) / box.dLat);
+        if (i >= (nCols - 1) || j >= (nRows - 1)) return null;
+        let x0 = box.lng0 + box.dLng*i;
+        let x = (lng - x0) / box.dLng;
+        let y0 = box.lat0 + box.dLat*j;
+        let y = (lat - y0) / box.dLat;
+        let rx = 1 - x, ry = 1 - y;
+
+        let z00 = rows[j][i], z10 = rows[j][i+1], z01 = rows[j+1][i], z11 = rows[j+1][i+1];
+        if (z00 == null || z10 == null || z01 == null || z11 == null) return null;
+        return z00*rx*ry + z10*x*ry + z01*rx*y + z11*x*y;
+    },
     drawCanvas(canvas, map) {
         if (!this.gl) return;
         if (!this.box || !this.rows) {
@@ -106,11 +123,11 @@ L.ShaderOverlay = L.CanvasOverlay.extend({
             gl.clear(gl.COLOR_BUFFER_BIT);
             return;
         }
-        const nrows = this.nrows, ncols = this.ncols;
-        const rows = this.rows;
         const bounds = map.getBounds();
         let p0 = map.latLngToContainerPoint([bounds.getSouth(), bounds.getWest()]);
         let p1 = map.latLngToContainerPoint([bounds.getNorth(), bounds.getEast()]);
+        let dx = (p1.x - p0.x);
+        let dy = (p1.y - p0.y);
 
         const gl = this.gl;
         gl.clearColor(0, 0, 0, 0);
@@ -124,16 +141,36 @@ L.ShaderOverlay = L.CanvasOverlay.extend({
 
         let vertexPositions = [], indexes = [], vertexColors = [];
         let pointIndex = {};  // {iRow-iCol:int}
-        for (let iRow=nrows-1, lat=this.box.lat1 - this.box.dLat; iRow>=0; iRow--, lat -= this.box.dLat) {
-            for(let iCol=0,lng = this.box.lng0; iCol<ncols; iCol++, lng += this.box.dLng) {
+        let box = this.box;
+        let dLat = box.dLat;
+        let dLng = box.dLng;
+        let nrows = this.nrows;
+        let ncols = this.ncols;
+        let rows = this.rows;
+        let interpolating = false;
+        if (this.options.interpolate && (ncols < this.options.interpolate.minCols || nrows < this.options.interpolate.minRows)) {
+            interpolating = true;
+            nrows = this.options.interpolate.minRows;
+            ncols = this.options.interpolate.minCols;
+            dLat = (box.lat1 - box.lat0) / nrows;
+            dLng = (box.lng1 - box.lng0) / ncols;
+        }
+
+        for (let iRow=nrows-1, lat=this.box.lat1 - dLat; iRow>=0; iRow--, lat -= dLat) {
+            for(let iCol=0,lng = this.box.lng0; iCol<ncols; iCol++, lng += dLng) {
                 let key = iRow + "-" + iCol;
-                let v = rows[iRow][iCol];
+                let v;
+                if (!interpolating) {
+                    v = rows[iRow]?rows[iRow][iCol]:null;
+                } else {
+                    v = this.interpolate.call(this, lat, lng, this.box, rows, this.ncols, this.nrows);
+                }
                 if (v !== null) {
                     let p = map.latLngToContainerPoint({lat, lng})
-                    let x = (p.x - p0.x) / (p1.x - p0.x) * 2 - 1;
-                    let y = (p.y - p0.y) / (p1.y - p0.y) * 2 - 1;
+                    let x = 2 * (p.x - p0.x) / dx - 1;
+                    let y = 2 * (p.y - p0.y) / dy - 1;
                     pointIndex[key] = vertexPositions.length / 2;
-                    vertexPositions.push(x, y);                    
+                    vertexPositions.push(x, y);
                     let colors = this.options.getColor(v, lat, lng);
                     while (colors.length < 4) colors.push(255);                    
                     vertexColors.push(colors[0]/255, colors[1]/255, colors[2]/255, colors[3]/255);

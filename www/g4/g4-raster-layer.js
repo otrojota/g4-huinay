@@ -91,9 +91,57 @@ class G4RasterLayer extends G4Layer {
         }
     }
 
+    _inperpolatedPoint(lat, lng, box, rows, nCols, nRows) {
+        // https://en.wikipedia.org/wiki/Bilinear_interpolation                    
+        if (lat <= box.lat0 || lat >= box.lat1 || lng <= box.lng0 || lng >= box.lng1) return null;
+        let i = parseInt((lng - box.lng0) / box.dLng);
+        let j = parseInt((lat - box.lat0) / box.dLat);
+        if (i >= (nCols - 1) || j >= (nRows - 1)) return null;
+        let x0 = box.lng0 + box.dLng*i;
+        let x = (lng - x0) / box.dLng;
+        let y0 = box.lat0 + box.dLat*j;
+        let y = (lat - y0) / box.dLat;
+        let rx = 1 - x, ry = 1 - y;
+
+        let z00 = rows[j][i], z10 = rows[j][i+1], z01 = rows[j+1][i], z11 = rows[j+1][i+1];
+        if (z00 == null || z10 == null || z01 == null || z11 == null) return null;
+        return z00*rx*ry + z10*x*ry + z01*rx*y + z11*x*y;
+    }
+
     async refresh() {
         try {
             this.cancel();
+            // Obtener los datos (para no repetir, algunos visualizadores usan los mismos)
+            let getFilesPromises = [];
+            let addedFiles = {};
+            if (this.config.shader && this.config.shader.active && !addedFiles.grid) {
+                addedFiles.grid = true;
+                getFilesPromises.push(this.getFileGrid());
+            }
+            if (this.config.particles && this.config.particles.active && !addedFiles.vectorsGrid) {
+                addedFiles.vectorsGrid = true;
+                getFilesPromises.push(this.getFileVectorsGrid());
+            }
+            if (this.config.vectors && this.config.vectors.active && !addedFiles.vectorsGrid) {
+                addedFiles.vectorsGrid = true;
+                getFilesPromises.push(this.getFileVectorsGrid());
+            }
+            if (this.config.barbs && this.config.barbs.active && !addedFiles.vectorsGrid) {
+                addedFiles.vectorsGrid = true;
+                getFilesPromises.push(this.getFileVectorsGrid());
+            }
+            if (this.config.isobands && this.config.isobands.active && !addedFiles.isobandsGeoJson) {
+                addedFiles.isobandsGeoJson = true;
+                getFilesPromises.push(this.getFileIsobandsGeoJson());
+            }
+            if (this.config.isolines && this.config.isolines.active && !addedFiles.isolinesGeoJson) {
+                addedFiles.isolinesGeoJson = true;
+                getFilesPromises.push(this.getFileIsolinesGeoJson());
+            }
+
+            await Promise.all(getFilesPromises);
+
+            // Dibujado
             let drawPromises = [];
             if (this.config.shader && this.config.shader.active) {
                 drawPromises.push(this.drawShader());
@@ -120,156 +168,163 @@ class G4RasterLayer extends G4Layer {
         }
     }
 
+    async getFileGrid() {
+        this.gridCurrentController = new AbortController();
+        try {
+            this.grid = await this.getFile(this.gridURL, this.gridCurrentController);
+        } catch(error) {
+            throw error;
+        } finally {
+            this.gridCurrentController = null;
+        }
+    }
+    async getFileVectorsGrid() {
+        this.particlesCurrentController = new AbortController();
+        try {
+            this.vectorsGrid = await this.getFile(this.vectorsGridURL, this.particlesCurrentController);
+        } catch(error) {
+            throw error;
+        } finally {
+            this.particlesCurrentController = null;
+        }
+    }
+    async getFileIsobandsGeoJson() {
+        this.isobandsCurrentController = new AbortController();
+        try {
+            this.isobandsGeoJson = await this.getFile(this.isobandsURL, this.isobandsCurrentController);
+        } catch(error) {
+            throw error;
+        } finally {
+            this.isobandsCurrentController = null;
+        }
+    }
+    async getFileIsolinesGeoJson() {
+        this.isolinesCurrentController = new AbortController();
+        try {
+            this.isolinesGeoJson = await this.getFile(this.isolinesURL, this.isolinesCurrentController);
+        } catch(error) {
+            throw error;
+        } finally {
+            this.isolinesCurrentController = null;
+        }
+    }
+    
+
     async drawShader() {
         try {
-            // Leer grid y actualizar capa
-            this.gridCurrentController = new AbortController();
-            try {
-                this.grid = await this.getFile(this.gridURL, this.gridCurrentController);
-                if (!this.shaderColorScale) {
-                    if (!this.config.shader.colorScale) throw "No hay 'colorScale' para la capa-shader";
-                    this.shaderColorScale = window.g4.createColorScale(this.geoserverURL, this.config.shader.colorScale.name, this.config.shader.colorScale);
-                }
-                this.shaderColorScale.setRange(this.grid.min, this.grid.max);
-                if (!this.shaderLayer) {
-                    this.shaderLayer = new L.ShaderOverlay({
-                        getColor: (v, lat, lng) => {
-                            return this.shaderColorScale.getColorObject(v);
-                        },
-                        zIndex:(this.getOrder() >= 0)?200 + 10 *this.getOrder():-1,
-                        opacity: this.getOpacity()
-                    });
-                    this.shaderLayer.addTo(window.g4.mapController.map);
-                }    
-                this.shaderLayer.setGridData(this.grid.foundBox, this.grid.rows, this.grid.nrows, this.grid.ncols);
-            } catch(error) {
-                console.error(error);
-                if (this.shaderLayer) {
-                    this.shaderLayer.remove();
-                    this.shaderLayer = null;
-                }
-                return;
-            } finally {
-                this.gridCurrentController = null;
+            if (!this.shaderColorScale) {
+                if (!this.config.shader.colorScale) throw "No hay 'colorScale' para la capa-shader";
+                this.shaderColorScale = window.g4.createColorScale(this.geoserverURL, this.config.shader.colorScale.name, this.config.shader.colorScale);
             }
-        } catch (error) {
+            this.shaderColorScale.setRange(this.grid.min, this.grid.max);
+            if (!this.shaderLayer) {
+                this.shaderLayer = new L.ShaderOverlay({
+                    getColor: (v, lat, lng) => {
+                        return this.shaderColorScale.getColorObject(v);
+                    },
+                    zIndex:(this.getOrder() >= 0)?200 + 10 *this.getOrder():-1,
+                    opacity: this.getOpacity(),
+                    interpolate: this.config.shader.interpolate
+                });
+                this.shaderLayer.addTo(window.g4.mapController.map);
+            }    
+            this.shaderLayer.setGridData(this.grid.foundBox, this.grid.rows, this.grid.nrows, this.grid.ncols);
+        } catch(error) {
+            console.error(error);
+            if (this.shaderLayer) {
+                this.shaderLayer.remove();
+                this.shaderLayer = null;
+            }
             throw error;
         }
     }
+
     async drawParticles() {
         try {
-            // Leer grid y actualizar capa
-            this.particlesCurrentController = new AbortController();
-            try {
-                this.vectorsGrid = await this.getFile(this.vectorsGridURL, this.particlesCurrentController);
-                if (!this.particlesLayer) {
-                    let opts = {
-                        zIndex:(this.getOrder() >= 0)?203 + 10 *this.getOrder():-1,
-                        opacity: this.getOpacity()                        
-                    }                    
-                    if (this.config.particles.color) opts.color = this.config.particles.color;
-                    if (this.config.particles.particles) opts.paths = this.config.particles.particles;
-                    if (this.config.particles.width) opts.width = this.config.particles.width;
-                    if (this.config.particles.fade) opts.fade = this.config.particles.fade;
-                    if (this.config.particles.duration) opts.duration = this.config.particles.duration;
-                    if (this.config.particles.maxAge) opts.maxAge = this.config.particles.maxAge;
-                    if (this.config.particles.velocityScale) opts.velocityScale = this.config.particles.velocityScale;
-                    
-                    this.particlesLayer = new L.ParticlesOverlay(opts);
-                    this.particlesLayer.addTo(window.g4.mapController.map);
-                }    
-                this.particlesLayer.setVectorsGridData(this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.nrows, this.vectorsGrid.ncols);
-            } catch(error) {
-                console.error(error);
-                if (this.particlesLayer) {
-                    this.particlesLayer.remove();
-                    this.particlesLayer = null;
-                }
-                return;
-            } finally {
-                this.particlesCurrentController = null;
+            if (!this.particlesLayer) {
+                let opts = {
+                    zIndex:(this.getOrder() >= 0)?203 + 10 *this.getOrder():-1,
+                    opacity: this.getOpacity()                        
+                }                    
+                if (this.config.particles.color) opts.color = this.config.particles.color;
+                if (this.config.particles.particles) opts.paths = this.config.particles.particles;
+                if (this.config.particles.width) opts.width = this.config.particles.width;
+                if (this.config.particles.fade) opts.fade = this.config.particles.fade;
+                if (this.config.particles.duration) opts.duration = this.config.particles.duration;
+                if (this.config.particles.maxAge) opts.maxAge = this.config.particles.maxAge;
+                if (this.config.particles.velocityScale) opts.velocityScale = this.config.particles.velocityScale;
+                
+                this.particlesLayer = new L.ParticlesOverlay(opts);
+                this.particlesLayer.addTo(window.g4.mapController.map);
+            }    
+            this.particlesLayer.setVectorsGridData(this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.nrows, this.vectorsGrid.ncols);
+        } catch(error) {
+            console.error(error);
+            if (this.particlesLayer) {
+                this.particlesLayer.remove();
+                this.particlesLayer = null;
             }
-        } catch (error) {
             throw error;
         }
     }
+
     async drawVectors() {
         try {
-            // Leer grid y actualizar capa
-            this.vectorsCurrentController = new AbortController();
-            try {
-                this.vectorsGrid = await this.getFile(this.vectorsGridURL, this.vectorsCurrentController);
-                if (!this.vectorsLayer) {
-                    let opts = {
-                        zIndex:(this.getOrder() >= 0)?204 + 10 *this.getOrder():-1,
-                        opacity: this.getOpacity()                        
-                    }                    
-                    if (this.config.vectors.color) opts.color = this.config.vectors.color;
-                    
-                    this.vectorsLayer = new L.VectorsOverlay(opts);
-                    this.vectorsLayer.addTo(window.g4.mapController.map);
-                }    
-                this.vectorsLayer.setVectorsGridData(this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.nrows, this.vectorsGrid.ncols);
-            } catch(error) {
-                console.error(error);
-                if (this.vectorsLayer) {
-                    this.vectorsLayer.remove();
-                    this.vectorsLayer = null;
-                }
-                return;
-            } finally {
-                this.vectorsCurrentController = null;
+            if (!this.vectorsLayer) {
+                let opts = {
+                    zIndex:(this.getOrder() >= 0)?204 + 10 *this.getOrder():-1,
+                    opacity: this.getOpacity()                        
+                }                    
+                if (this.config.vectors.color) opts.color = this.config.vectors.color;
+                
+                this.vectorsLayer = new L.VectorsOverlay(opts);
+                this.vectorsLayer.addTo(window.g4.mapController.map);
+            }    
+            this.vectorsLayer.setVectorsGridData(this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.nrows, this.vectorsGrid.ncols);
+        } catch(error) {
+            console.error(error);
+            if (this.vectorsLayer) {
+                this.vectorsLayer.remove();
+                this.vectorsLayer = null;
             }
-        } catch (error) {
             throw error;
         }
     }
+
     async drawBarbs() {
         try {
-            // Leer grid y actualizar capa
-            this.barbsCurrentController = new AbortController();
-            try {
-                this.vectorsGrid = await this.getFile(this.vectorsGridURL, this.barbsCurrentController);
-                if (!this.barbsLayer) {
-                    let opts = {
-                        zIndex:(this.getOrder() >= 0)?205 + 10 *this.getOrder():-1,
-                        opacity: this.getOpacity()                        
-                    }                    
-                    if (this.config.barbs.color) opts.color = this.config.barbs.color;
-                    
-                    this.barbsLayer = new L.BarbsOverlay(opts);
-                    this.barbsLayer.addTo(window.g4.mapController.map);
-                }    
-                this.barbsLayer.setVectorsGridData(this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.nrows, this.vectorsGrid.ncols);
-            } catch(error) {
-                console.error(error);
-                if (this.barbsLayer) {
-                    this.barbsLayer.remove();
-                    this.barbsLayer = null;
+            if (!this.barbsLayer) {
+                let opts = {
+                    zIndex:(this.getOrder() >= 0)?205 + 10 *this.getOrder():-1,
+                    opacity: this.getOpacity()                        
+                }                    
+                if (this.config.barbs.color) opts.color = this.config.barbs.color;
+                if (this.config.barbs.transformMagnitude) {
+                    try {
+                        opts.transformMagnitude = eval("(" + this.config.barbs.transformMagnitude + ")");
+                        if (typeof(opts.transformMagnitude) != "function") throw "Barbs transformMagnitude no es una funcion [" + typeof(opts.transformMagnitude + "]")
+                    } catch (error) {
+                        console.error(error);
+                        opts.transformMagnitude = null;
+                    }
                 }
-                return;
-            } finally {
-                this.barbsCurrentController = null;
+                
+                this.barbsLayer = new L.BarbsOverlay(opts);
+                this.barbsLayer.addTo(window.g4.mapController.map);
+            }    
+            this.barbsLayer.setVectorsGridData(this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.nrows, this.vectorsGrid.ncols);
+        } catch(error) {
+            console.error(error);
+            if (this.barbsLayer) {
+                this.barbsLayer.remove();
+                this.barbsLayer = null;
             }
-        } catch (error) {
             throw error;
         }
     }
+    
     async drawIsobands() {
         try {
-            // Leer geoJson y actualizar capa
-            this.isobandsCurrentController = new AbortController();
-            try {
-                this.isobandsGeoJson = await this.getFile(this.isobandsURL, this.isobandsCurrentController);
-            } catch(error) {
-                if (this.isobandsLayer) {
-                    this.isobandsLayer.remove();
-                    this.isobandsLayer = null;
-                }
-                return;
-            } finally {
-                this.isobandsCurrentController = null;
-            }
             if (!this.isobandsColorScale) {
                 if (!this.config.isobands.colorScale) throw "No hay 'colorScale' para la capa-isobandas";
                 this.isobandsColorScale = window.g4.createColorScale(this.geoserverURL, this.config.isobands.colorScale.name, this.config.isobands.colorScale);
@@ -288,25 +343,17 @@ class G4RasterLayer extends G4Layer {
             }            
             this.isobandsLayer.setGeoJson(this.isobandsGeoJson.geoJson);
         } catch (error) {
+            console.error(error);
+            if (this.isobandsLayer) {
+                this.isobandsLayer.remove();
+                this.isobandsLayer = null;
+            }
             throw error;
         }
     }
 
     async drawIsolines() {
         try {
-            // Leer geoJson y actualizar capa
-            this.isolinesCurrentController = new AbortController();
-            try {
-                this.isolinesGeoJson = await this.getFile(this.isolinesURL, this.isolinesCurrentController);
-            } catch(error) {
-                if (this.isolinesLayer) {
-                    this.isolinesLayer.remove();
-                    this.isolinesLayer = null;
-                }
-                return;
-            } finally {
-                this.isolinesCurrentController = null;
-            }
             if (!this.isolinesLayer) {                
                 this.isolinesLayer = new L.GeoJsonOverlay({
                     lineColor: feature => {                        
@@ -320,6 +367,11 @@ class G4RasterLayer extends G4Layer {
             } 
             this.isolinesLayer.setGeoJson(this.isolinesGeoJson.geoJson);
         } catch (error) {
+            console.error(error);
+            if (this.isolinesLayer) {
+                this.isolinesLayer.remove();
+                this.isolinesLayer = null;
+            }
             throw error;
         }
     }
