@@ -73,9 +73,12 @@ class MapControls extends ZCustomController {
     onCmdZoomOut_click() {window.g4.mapController.zoomOut()}
 
     async onCmdConfigLayers_click() {
-        await window.g4.mainController.loadLeftPanel("main/config-panels/MultiPanelsLoader",{
+        await window.g4.mainController.loadLeftPanel("main/config-panels/MultiPanelsLoader", {
             panels:[{
                 panel:"./OpacidadCapas", panelOptions:{}, title:"Opacidad Capas"
+            }, {
+                
+                panel:"./MapaBase", panelOptions:{}, title:"Mapa Base"
             }]
         }, "Capas Activas");
     }

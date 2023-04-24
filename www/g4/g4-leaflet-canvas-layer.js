@@ -21,7 +21,7 @@ L.CanvasOverlay = L.Layer.extend({
         L.DomUtil.addClass(this._canvas, 'leaflet-zoom-' + (this.animatedZoom ? 'animated' : 'hide'));
 
         map.getPanes().overlayPane.appendChild(this._canvas);
-        this._reset();
+        this._reset.call(this);
   
         map.on('moveend', this.onMoveEnd, this);
         map.on('movestart', this.onMoveStart, this);
@@ -52,7 +52,7 @@ L.CanvasOverlay = L.Layer.extend({
     },
   
     onMoveEnd: function() {
-        this._reset();
+        this._reset.call(this);
     },
     onMoveStart: function() {},
   
@@ -63,7 +63,24 @@ L.CanvasOverlay = L.Layer.extend({
     _reset: function () {
         var topLeft = this._map.containerPointToLayerPoint([0, 0]);
         L.DomUtil.setPosition(this._canvas, topLeft);
-        this.redraw();
+        // Constantes para mapeo de coordenadas a canvas
+        const bounds = this._map.getBounds();
+        this.c_p0 = this._map.latLngToContainerPoint([bounds.getSouth(), bounds.getWest()]);
+        this.c_p1 = this._map.latLngToContainerPoint([bounds.getNorth(), bounds.getEast()]);
+        this.c_dx = (this.c_p1.x - this.c_p0.x);
+        this.c_dy = -this._canvas.height; // (p1.y - p0.y);
+        this.redraw.call(this);
+    },
+    latLngToCanvas(lat, lng) {
+        let p = this._map.latLngToContainerPoint({lat, lng});
+        p.y -= (this._canvas.height - this.c_p0.y);
+        return p;
+    },
+    latLngToWebGL(lat, lng) {
+        let p = this.latLngToCanvas.call(this, lat,  lng);
+        let x = 2 * (p.x - this.c_p0.x) / this.c_dx - 1;
+        let y = 2 * (p.y - this.c_p0.y) / this.c_dy - 1;
+        return {x, y}
     },
     _onZoomAnim: function(e) {
         let bounds   = this._map.getBounds();

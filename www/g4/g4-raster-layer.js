@@ -19,7 +19,7 @@ class G4RasterLayer extends G4Layer {
     }
     get gridURL() {
         let b = window.g4.mapController.getCurrentBounds(0.25);
-        let url = `${this.geoserverURL}/${this.dataSetCode}/${this.variableCode}/grid?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}`;
+        let url = `${this.geoserverURL}/${this.dataSetCode}/${this.variableCode}/grid?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}&margin=2`;
         if (this.dependsOnTime) url += "&time=" + window.g4.time.valueOf();
         return url;
     }
@@ -89,23 +89,6 @@ class G4RasterLayer extends G4Layer {
         } catch(error) {
             console.error(error);
         }
-    }
-
-    _inperpolatedPoint(lat, lng, box, rows, nCols, nRows) {
-        // https://en.wikipedia.org/wiki/Bilinear_interpolation                    
-        if (lat <= box.lat0 || lat >= box.lat1 || lng <= box.lng0 || lng >= box.lng1) return null;
-        let i = parseInt((lng - box.lng0) / box.dLng);
-        let j = parseInt((lat - box.lat0) / box.dLat);
-        if (i >= (nCols - 1) || j >= (nRows - 1)) return null;
-        let x0 = box.lng0 + box.dLng*i;
-        let x = (lng - x0) / box.dLng;
-        let y0 = box.lat0 + box.dLat*j;
-        let y = (lat - y0) / box.dLat;
-        let rx = 1 - x, ry = 1 - y;
-
-        let z00 = rows[j][i], z10 = rows[j][i+1], z01 = rows[j+1][i], z11 = rows[j+1][i+1];
-        if (z00 == null || z10 == null || z01 == null || z11 == null) return null;
-        return z00*rx*ry + z10*x*ry + z01*rx*y + z11*x*y;
     }
 
     async refresh() {
@@ -359,7 +342,7 @@ class G4RasterLayer extends G4Layer {
                     lineColor: feature => {                        
                         return this.config.isolines.color;
                     },
-                    smoothLines: false,
+                    smoothLines: this.config.isolines.smoothLines?true:false,
                     zIndex:(this.getOrder() >= 0)?202 + 10 *this.getOrder():-1,
                     opacity: this.getOpacity()
                 })

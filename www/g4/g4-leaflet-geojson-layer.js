@@ -299,22 +299,15 @@ L.GeoJsonOverlay = L.CanvasOverlay.extend({
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-        const bounds = map.getBounds();
-        let p0 = map.latLngToContainerPoint([bounds.getSouth(), bounds.getWest()]);
-        let p1 = map.latLngToContainerPoint([bounds.getNorth(), bounds.getEast()]);
-        const w = (p1.x - p0.x);
-        const h = (p1.y - p0.y);
         if (this.polygons) { // Pintar PolygonBorders y Polygons
             let borderLines = [], borderColors = [];
-            let polygonVertices = [], polygonTriangles = [], polygonColors = [];
+            let polygonVertices = [], polygonColors = [];
             for (let polygonObject of this.polygons) {
                 if (polygonObject.borderColor || polygonObject.color) {
                     let flatten = polygonObject.flatten;
-                    let points = []; // Puntos mapeados a contenedor
+                    let points = []; // Puntos mapeados a viewport WebGL
                     for (let i=0; i<flatten.vertices.length; i+=2) {
-                        let p = map.latLngToContainerPoint([flatten.vertices[i+1], flatten.vertices[i]]);
-                        p.x = (p.x - p0.x) / w * 2 - 1;
-                        p.y = (p.y - p0.y) / h * 2 - 1;
+                        let p = this.latLngToWebGL.call(this, flatten.vertices[i+1], flatten.vertices[i]);
                         points.push(p);
                     }
                     if (polygonObject.borderColor) {
@@ -412,9 +405,7 @@ L.GeoJsonOverlay = L.CanvasOverlay.extend({
             for (let lineObject of this.lines) {                                
                 let lastPoint=null;                
                 for (let point of lineObject.points) {
-                    let p = map.latLngToContainerPoint([point[1], point[0]]);
-                    p.x = (p.x - p0.x) / w * 2 - 1;
-                    p.y = (p.y - p0.y) / h * 2 - 1;                    
+                    let p = this.latLngToWebGL.call(this, point[1], point[0]);
                     if (lastPoint) {
                         linePoints.push(lastPoint.x, lastPoint.y, 0, p.x, p.y, 0);
                         lineColors.push(...(lineObject.color || [0,0,0,1]), ...(lineObject.color || [0,0,0,1]));
