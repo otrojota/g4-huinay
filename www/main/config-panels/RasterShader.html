@@ -8,7 +8,45 @@
     <hr class="my-1" />
     <div class="mb-2">
         <label for="edEscala" class="form-label">Escala de Colores</label>
-        <select id="edEscala" class="form-select" data-z-id-field="name" data-z-label-field="name"></select>
+        <select id="edEscala" class="form-select form-select-sm" data-z-id-field="name" data-z-label-field="name"></select>
     </div>
-
+    <div class="form-check">
+        <input id="edAuto" class="form-check-input" type="checkbox" value="">
+        <label class="form-check-label" for="edAuto">
+          Límites Automáticos
+        </label>
+    </div>
+    <div class="row mb-2">
+        <div class="col">
+            <label for="edMin" class="form-label">Valor Mínimo</label>
+            <input id="edMin" class="form-control form-control-sm text-end" data-z-autochange-delay="300" />    
+        </div>
+        <div class="col">
+            <label for="edMax" class="form-label">Valor Máximo</label>
+            <input id="edMax" class="form-control form-control-sm text-end" data-z-autochange-delay="300" />    
+        </div>
+    </div>
+    <div class="form-check">
+        <input id="edClipOutOfRange" class="form-check-input" type="checkbox" value="">
+        <label class="form-check-label" for="edClipOutOfRange">
+          Eliminar Valores fuera del Rango
+        </label>
+    </div>
+    <hr class="my-1" />
+    <div class="form-check">
+        <input id="edInterpolate" class="form-check-input" type="checkbox" value="">
+        <label class="form-check-label" for="edInterpolate">
+          Interpolar Resultados
+        </label>
+    </div>
+    <div class="row mb-2">
+        <div class="col">
+            <label for="edMinCols" class="form-label">N° Columnas</label>
+            <input id="edMinCols" class="form-control form-control-sm text-end" data-z-autochange-delay="300" />    
+        </div>
+        <div class="col">
+            <label for="edMinRows" class="form-label">N° Filas</label>
+            <input id="edMinRows" class="form-control form-control-sm text-end" data-z-autochange-delay="300" />    
+        </div>
+    </div>
 </div>

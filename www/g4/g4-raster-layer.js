@@ -90,10 +90,17 @@ class G4RasterLayer extends G4Layer {
         }
     }
 
+    roundValue(v) {
+        let dec = this.variable.options?this.variable.options.decimals:2;
+        if (dec === undefined) dec = 2;
+        return v.toFixed(dec);
+    }
+
     async refresh() {
         try {
             this.cancel();
             // Obtener los datos (para no repetir, algunos visualizadores usan los mismos)
+            this.grid = null; this.vectorsGrid = null; this.isolinesGeoJson = null; this.isobandsGeoJson = null;
             let getFilesPromises = [];
             let addedFiles = {};
             if (this.config.shader && this.config.shader.active && !addedFiles.grid) {
@@ -122,32 +129,38 @@ class G4RasterLayer extends G4Layer {
             }
 
             await Promise.all(getFilesPromises);
-
-            // Dibujado
-            let drawPromises = [];
-            if (this.config.shader && this.config.shader.active) {
-                drawPromises.push(this.drawShader());
-            }
-            if (this.config.particles && this.config.particles.active) {
-                drawPromises.push(this.drawParticles());
-            }
-            if (this.config.vectors && this.config.vectors.active) {
-                drawPromises.push(this.drawVectors());
-            }            
-            if (this.config.barbs && this.config.barbs.active) {
-                drawPromises.push(this.drawBarbs());
-            }            
-            if (this.config.isobands && this.config.isobands.active) {
-                drawPromises.push(this.drawIsobands());
-            }            
-            if (this.config.isolines && this.config.isolines.active) {
-                drawPromises.push(this.drawIsolines());
-            }   
-            //await Promise.all(drawPromises);
-            Promise.all(drawPromises);
+            await this.drawVisualizers();
         } catch(error) {
             console.error(error);
         }
+    }
+
+    async drawVisualizers() {
+        // Dibujado
+        let drawPromises = [];
+        if (this.config.shader && this.config.shader.active) {
+            drawPromises.push(this.drawShader());
+        } else if (this.shaderLayer) {
+            this.shaderLayer.remove();
+            this.shaderLayer = null;
+        }
+        if (this.config.particles && this.config.particles.active) {
+            drawPromises.push(this.drawParticles());
+        }
+        if (this.config.vectors && this.config.vectors.active) {
+            drawPromises.push(this.drawVectors());
+        }            
+        if (this.config.barbs && this.config.barbs.active) {
+            drawPromises.push(this.drawBarbs());
+        }            
+        if (this.config.isobands && this.config.isobands.active) {
+            drawPromises.push(this.drawIsobands());
+        }            
+        if (this.config.isolines && this.config.isolines.active) {
+            drawPromises.push(this.drawIsolines());
+        }   
+        //await Promise.all(drawPromises);
+        Promise.all(drawPromises);
     }
 
     async getFileGrid() {
@@ -202,6 +215,9 @@ class G4RasterLayer extends G4Layer {
                 if (!this.config.shader.colorScale) throw "No hay 'colorScale' para la capa-shader";
                 this.shaderColorScale = window.g4.createColorScale(this.config.geoserver, this.config.shader.colorScale.name, this.config.shader.colorScale);
                 console.log("colorScale", this.shaderColorScale);
+            }
+            if (!this.grid) {
+                await this.getFileGrid();
             }
             this.shaderColorScale.setRange(this.grid.min, this.grid.max);
             if (!this.shaderLayer) {
@@ -389,20 +405,69 @@ class G4RasterLayer extends G4Layer {
     }
 
     // Seteo de propiedades    
-    callRefresh() {
-        if (this.refreshTimer) clearTimeout(this.refreshTimer);
-        this.refreshTimer = setTimeout(async _ => {
-            this.refreshTimer = null;
-            await this.refresh();
+    callRedraw() {
+        if (this.redrawTimer) clearTimeout(this.redrawTimer);
+        this.redrawTimer = setTimeout(async _ => {
+            this.redrawTimer = null;
+            await this.drawVisualizers();
         }, 100);
     }
     get geoserver() {return this.config.geoserver}
 
+    get shaderActive() {return this.config.shader && this.config.shader.active}
+    set shaderActive(a) {
+        if (!this.config.shader) throw "Shader no soportado en capa";
+        this.config.shader.active = a;
+        this.callRedraw();
+    }
     get shaderColorScaleDef() {return this.config.shader?this.config.shader.colorScale:null}
     set shaderColorScaleDef(scaleDef) {
         if (!this.config.shader) throw "Shader no soportado en capa";
         this.config.shader.colorScale.name = scaleDef.name;
         this.shaderColorScale = null;
-        this.callRefresh();
+        this.callRedraw();
+    }
+    get shaderColorScaleAuto() {return this.config.shader?this.config.shader.colorScale.auto:false}
+    set shaderColorScaleAuto(auto) {
+        if (!this.config.shader) throw "Shader no soportado en capa";
+        this.config.shader.colorScale.auto = auto;
+        this.shaderColorScale = null;
+        this.callRedraw();
+    }
+    get shaderColorScaleMin() {return this.config.shader?this.config.shader.colorScale.min:0}
+    set shaderColorScaleMin(min) {
+        if (!this.config.shader) throw "Shader no soportado en capa";
+        this.config.shader.colorScale.min = min;
+        this.shaderColorScale = null;
+        this.callRedraw();
+    }
+    get shaderColorScaleMax() {return this.config.shader?this.config.shader.colorScale.max:0}
+    set shaderColorScaleMax(max) {
+        if (!this.config.shader) throw "Shader no soportado en capa";
+        this.config.shader.colorScale.max = max;
+        this.shaderColorScale = null;
+        this.callRedraw();
+    }
+    get shaderColorScaleClipOutOfRange() {return this.config.shader?this.config.shader.clipOutOfRange:false}
+    set shaderColorScaleClipOutOfRange(clip) {
+        if (!this.config.shader) throw "Shader no soportado en capa";
+        this.config.shader.colorScale.clipOutOfRange = clip;
+        this.shaderColorScale = null;
+        this.callRedraw();
+    }
+    get shaderInterpolate() {return this.config.shader?this.config.shader.interpolate:false}
+    get shaderInterpolateMinCols() {return (this.config.shader && this.config.shader.interpolate)?this.config.shader.interpolate.minCols:300}
+    get shaderInterpolateMinRows() {return (this.config.shader && this.config.shader.interpolate)?this.config.shader.interpolate.minRows:300}
+    setShaderInterpolation(minCols, minRows) {
+        if (!this.config.shader) throw "Shader no soportado en capa";
+        if (minCols === undefined || minRows === undefined) {
+            delete this.config.shader.interpolate;    
+        } else {
+            this.config.shader.interpolate = {minCols, minRows};
+        }
+        this.shaderLayer.remove();
+        this.shaderLayer = null;
+        this.shaderColorScale = null;
+        this.callRedraw();
     }
 }
