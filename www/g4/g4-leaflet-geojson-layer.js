@@ -441,5 +441,5 @@ L.GeoJsonOverlay = L.CanvasOverlay.extend({
 })
 
 L.geoJsonOverlay = function(options) {
-    return new L.GaoJsonOverlay(options);
+    return new L.GeoJsonOverlay(options);
 };

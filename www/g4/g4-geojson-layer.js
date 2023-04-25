@@ -4,12 +4,12 @@ class G4GeoJsonLayer extends G4Layer {
     get subType() {return this.config.subType || "polygons"}
     get dependsOnTime() {return this.config.dependsOnTime?true:false;}
     get metadataURL() {
-        let url = this.config.url + "/metadata";
+        let url = window.g4.getGeoserverURL(this.config.geoserver) + "/" + this.config.url + "/metadata";
         if (this.dependsOnTime) url += "?time=" + window.g4.time.valueOf()
         return url;
     }
     get geoJsonURL() {
-        let url = this.config.url + "/geoJson";
+        let url = window.g4.getGeoserverURL(this.config.geoserver) + "/" + this.config.url + "/geoJson";
         if (this.dependsOnTime) url += "?time=" + window.g4.time.valueOf()
         return url;
     }
@@ -41,6 +41,12 @@ class G4GeoJsonLayer extends G4Layer {
             this.metadata = await this.getFile(this.metadataURL)            
         } catch(error) {
             console.error(error);
+        }
+    }
+    async g4destroy() {
+        if (this.geoJsonLayer) {
+            this.geoJsonLayer.remove();
+            this.geoJsonLayer = null;
         }
     }
 

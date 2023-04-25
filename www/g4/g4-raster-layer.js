@@ -2,30 +2,29 @@
 class G4RasterLayer extends G4Layer {
     get type() {return "raster"}
     get dependsOnTime() {return this.config.dependsOnTime?true:false;}
-    get geoserverURL() {return this.config.geoserverURL}
     get dataSetCode() {return this.config.dataSet};
     get variableCode() {return this.config.variable};
     get isolinesURL() {
         let b = window.g4.mapController.getCurrentBounds(0.25);
-        let url = `${this.geoserverURL}/${this.dataSetCode}/${this.variableCode}/isolines?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}`;
+        let url = `${window.g4.getGeoserverURL(this.config.geoserver)}/${this.dataSetCode}/${this.variableCode}/isolines?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}`;
         if (this.dependsOnTime) url += "&time=" + window.g4.time.valueOf();
         return url;
     }
     get isobandsURL() {
         let b = window.g4.mapController.getCurrentBounds(0.25);
-        let url = `${this.geoserverURL}/${this.dataSetCode}/${this.variableCode}/isobands?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}`;
+        let url = `${window.g4.getGeoserverURL(this.config.geoserver)}/${this.dataSetCode}/${this.variableCode}/isobands?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}`;
         if (this.dependsOnTime) url += "&time=" + window.g4.time.valueOf();
         return url;
     }
     get gridURL() {
         let b = window.g4.mapController.getCurrentBounds(0.25);
-        let url = `${this.geoserverURL}/${this.dataSetCode}/${this.variableCode}/grid?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}&margin=2`;
+        let url = `${window.g4.getGeoserverURL(this.config.geoserver)}/${this.dataSetCode}/${this.variableCode}/grid?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}&margin=2`;
         if (this.dependsOnTime) url += "&time=" + window.g4.time.valueOf();
         return url;
     }
     get vectorsGridURL() {
         let b = window.g4.mapController.getCurrentBounds(0.25);
-        let url = `${this.geoserverURL}/${this.dataSetCode}/${this.variableCode}/vectorsGrid?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}`;
+        let url = `${window.g4.getGeoserverURL(this.config.geoserver)}/${this.dataSetCode}/${this.variableCode}/vectorsGrid?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}`;
         if (this.dependsOnTime) url += "&time=" + window.g4.time.valueOf();
         return url;
     }
@@ -81,7 +80,7 @@ class G4RasterLayer extends G4Layer {
     async g4init() {
         try {
             super.g4init();
-            let {dataSet, variable} = await window.g4.getGeoserverVariableMetadata(this.geoserverURL, this.dataSetCode, this.variableCode);
+            let {dataSet, variable} = await window.g4.getGeoserverVariableMetadata(this.config.geoserver, this.dataSetCode, this.variableCode);
             this.dataSet = dataSet;
             this.variable = variable;
             if (this.config.opacity) this._opacity = this.config.opacity;
@@ -197,7 +196,7 @@ class G4RasterLayer extends G4Layer {
         try {
             if (!this.shaderColorScale) {
                 if (!this.config.shader.colorScale) throw "No hay 'colorScale' para la capa-shader";
-                this.shaderColorScale = window.g4.createColorScale(this.geoserverURL, this.config.shader.colorScale.name, this.config.shader.colorScale);
+                this.shaderColorScale = window.g4.createColorScale(this.config.geoserver, this.config.shader.colorScale.name, this.config.shader.colorScale);
             }
             this.shaderColorScale.setRange(this.grid.min, this.grid.max);
             if (!this.shaderLayer) {
@@ -310,7 +309,7 @@ class G4RasterLayer extends G4Layer {
         try {
             if (!this.isobandsColorScale) {
                 if (!this.config.isobands.colorScale) throw "No hay 'colorScale' para la capa-isobandas";
-                this.isobandsColorScale = window.g4.createColorScale(this.geoserverURL, this.config.isobands.colorScale.name, this.config.isobands.colorScale);
+                this.isobandsColorScale = window.g4.createColorScale(this.config.geoserver, this.config.isobands.colorScale.name, this.config.isobands.colorScale);
             }
             this.isobandsColorScale.setRange(this.isobandsGeoJson.min, this.isobandsGeoJson.max);
             if (!this.isobandsLayer) {

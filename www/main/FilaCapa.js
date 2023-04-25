@@ -30,5 +30,9 @@ class FilaCapa extends ZCustomController {
         let iconStatus = this.find("#iconStatus");
         iconStatus.className = icon;
     }
+
+    onCmdLayerConfig_click() {
+        this.triggerEvent("layerConfig", this.layer);
+    }
 }
 ZVC.export(FilaCapa);

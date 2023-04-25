@@ -19,6 +19,9 @@ class MapControls extends ZCustomController {
         window.g4.on("layer-removed", _ => {
             this.callRefreshLayers();
         })
+        window.g4.on("layer-renamed", _ => {
+            this.callRefreshLayers();
+        })
         window.g4.on("layer-status-change", async layer => {
             await this.layerStatusChange(layer);
         })
@@ -83,6 +86,15 @@ class MapControls extends ZCustomController {
         }, "Capas Activas");
     }
 
+    onCmdAddLayer_click() {
+        this.showDialog("./WAddLayer", {}, async layerDef => {
+            let layer = G4Layer.createFromDefinition(layerDef);
+            await window.g4.getActiveGroup().addLayer(layer);
+            await layer.g4init();
+            await layer.refresh();
+        })
+    }
+
     callRefreshLayers() {
         if (this.refreshLayersTimer) clearTimeout(this.refreshLayersTimer);
         this.refreshLayersTimer = setTimeout(_ => {
@@ -105,6 +117,13 @@ class MapControls extends ZCustomController {
         let controller = this.layersContainer.controllers.find(c => (c.layer.id == layer.id));
         if (!controller) return;
         controller.refreshStatus();
+    }
+    async onLayersContainer_layerConfig(layer) {
+        await window.g4.mainController.loadLeftPanel("main/config-panels/MultiPanelsLoader", {
+            panels:[{
+                panel:"./PropCapa", panelOptions:{layer}, title:"Propiedades"
+            }]
+        }, layer.name);
     }
 
     // Time

@@ -1,6 +1,5 @@
 class MapaBase extends ZCustomController {
     onThis_init() {
-        console.log("sm", window.g4.mapController);
         this.edMapaBase.setRows(window.config.maps, window.g4.mapController.selectedMap);
         this.refreshMap();
     }

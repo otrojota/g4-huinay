@@ -15,6 +15,15 @@ class G4Group {
         layer.resetOrder();
         await window.g4.trigger("layer-added", layer);
     }
+    async removeLayer(layer) {
+        let idx = this.layers.findIndex(l => l.id == layer.id);
+        if (idx >= 0) {
+            this.layers.splice(idx, 1);
+            this.layers.forEach(l => l.resetOrder());
+            await window.g4.trigger("layer-removed", layer);
+        }
+    }
+
     getLayerOrder(layer) {
         let idx = this.layers.indexOf(layer);
         return idx;
@@ -42,9 +51,10 @@ class G4Layer {
         return layers;
     }
     static createFromDefinition(def) {
+        let defClone = JSON.parse(JSON.stringify(def));
         switch (def.type) {
-            case "geojson": return new G4GeoJsonLayer(def.name, def.config);
-            case "raster": return new G4RasterLayer(def.name, def.config);
+            case "geojson": return new G4GeoJsonLayer(def.name, defClone.config);
+            case "raster": return new G4RasterLayer(def.name, defClone.config);
             default: throw "Layer Type '" + def.type + "' not handled";
         }
     }    

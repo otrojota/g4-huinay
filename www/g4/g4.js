@@ -23,6 +23,9 @@ class G4 {
         }
         listeners.push(listener);
     }
+    off(eventName, listener) {
+        this.remove(eventName, listener);
+    }
     remove(eventName, listener) {
         let listeners = this.eventListeners[eventName];
         if (!listeners) return;
@@ -44,9 +47,15 @@ class G4 {
 
     // Time
     get time() {return this._time}
-    async setTime(lx) {
+    setTime(lx) {
         this._time = lx;
-        await this.trigger("time-change", this.time);
+        if (this.timeChangeTimer) {
+            clearTimeout(this.timeChangeTimer);
+        }
+        this.timeChangeTimer = setTimeout(async _ => {
+            this.timeChangeTimer = null;
+            await this.trigger("time-change", this.time);
+        }, 200)        
     }
     incTime(step) {
         this.setTime(this.time.plus(step));
@@ -78,6 +87,12 @@ class G4 {
                     reject(err)
                 });
         })
+    }
+    getGeoserverURL(name) {
+        if (!window.config.geoservers) throw "No se ha definido 'geoservers' en la configuración"
+        let url = window.config.geoservers[name];
+        if (!url) throw "No se ha definido la URL del geoServer '" + name + "' en la configuración";
+        return url;
     }
 
     // Groups and Layers
@@ -111,8 +126,8 @@ class G4 {
         }
         return metadata;
     }
-    async getGeoserverVariableMetadata(geoServerURL, dataSetCode, variableCode) {
-        let metadata = await this.getGeoserverMetadata(geoServerURL);
+    async getGeoserverVariableMetadata(geoserver, dataSetCode, variableCode) {
+        let metadata = await this.getGeoserverMetadata(this.getGeoserverURL(geoserver));
         let dataSet = metadata.dataSets.find(d => (d.code == dataSetCode));
         if (!dataSet) throw "No se encontró el dataSet '" + dataSetCode + "'";
         let variable = dataSet.variables.find(v => (v.code == variableCode));
@@ -120,8 +135,8 @@ class G4 {
         return {dataSet, variable};
     }
 
-    createColorScale(geoserverURL, scaleName, scaleConfig) {
-        let factory = this.geoServersColorScales[geoserverURL];
+    createColorScale(geoserver, scaleName, scaleConfig) {
+        let factory = this.geoServersColorScales[this.getGeoserverURL(geoserver)];
         let scaleDef = factory.byName(scaleName);
         if (!scaleDef) throw "No se encontró la escala de colores '" + scaleName + "' en el servidor"
         return factory.createScale(scaleDef, scaleConfig);

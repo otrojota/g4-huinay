@@ -15,7 +15,10 @@ class Main extends ZCustomController {
         this.leftPanel.view.addEventListener("hidden.bs.offcanvas", _ => window.g4.trigger("left-panel-closed"));
         this.leftPanelOpened = false;
         window.g4.on("left-panel-opened", _ => {this.leftPanelOpened = true})
-        window.g4.on("left-panel-closed", _ => {this.leftPanelOpened = false})
+        window.g4.on("left-panel-closed", async _ => {
+            this.leftPanelOpened = false;
+            await this.leftPanelLoader.load("common/Empty", {});
+        })
 
         this.rightOffsetCanvas = new bootstrap.Offcanvas(this.rightPanel.view);
 
