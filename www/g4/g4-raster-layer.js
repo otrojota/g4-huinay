@@ -192,18 +192,21 @@ class G4RasterLayer extends G4Layer {
     }
     
 
+    getShaderColor(v) {
+        let c = this.shaderColorScale.getColorObject(v); 
+        return c;
+    }
     async drawShader() {
         try {
             if (!this.shaderColorScale) {
                 if (!this.config.shader.colorScale) throw "No hay 'colorScale' para la capa-shader";
                 this.shaderColorScale = window.g4.createColorScale(this.config.geoserver, this.config.shader.colorScale.name, this.config.shader.colorScale);
+                console.log("colorScale", this.shaderColorScale);
             }
             this.shaderColorScale.setRange(this.grid.min, this.grid.max);
             if (!this.shaderLayer) {
                 this.shaderLayer = new L.ShaderOverlay({
-                    getColor: (v, lat, lng) => {
-                        return this.shaderColorScale.getColorObject(v);
-                    },
+                    getColor: (v, lat, lng) => {return this.getShaderColor(v);},
                     zIndex:(this.getOrder() >= 0)?200 + 10 *this.getOrder():-1,
                     opacity: this.getOpacity(),
                     interpolate: this.config.shader.interpolate
@@ -383,5 +386,23 @@ class G4RasterLayer extends G4Layer {
         if (this.particlesCurrentController) this.particlesCurrentController.abort();
         if (this.vectorsCurrentController) this.vectorsCurrentController.abort();
         if (this.barbsCurrentController) this.barbsCurrentController.abort();
+    }
+
+    // Seteo de propiedades    
+    callRefresh() {
+        if (this.refreshTimer) clearTimeout(this.refreshTimer);
+        this.refreshTimer = setTimeout(async _ => {
+            this.refreshTimer = null;
+            await this.refresh();
+        }, 100);
+    }
+    get geoserver() {return this.config.geoserver}
+
+    get shaderColorScaleDef() {return this.config.shader?this.config.shader.colorScale:null}
+    set shaderColorScaleDef(scaleDef) {
+        if (!this.config.shader) throw "Shader no soportado en capa";
+        this.config.shader.colorScale.name = scaleDef.name;
+        this.shaderColorScale = null;
+        this.callRefresh();
     }
 }

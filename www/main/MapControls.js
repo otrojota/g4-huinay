@@ -3,7 +3,7 @@ class MapControls extends ZCustomController {
         let lx = new luxon.DateTime({}, {zone: window.config.timeZone, locale: window.config.locale});        
         lx = lx.startOf("hour");
         lx.setLocale(window.config.locale);        
-        window.g4.setTime(lx);
+        window.g4.setTime(lx, 0);
         this.refreshTime();
 
         window.g4.on("left-panel-opened", _ => {
@@ -119,11 +119,13 @@ class MapControls extends ZCustomController {
         controller.refreshStatus();
     }
     async onLayersContainer_layerConfig(layer) {
-        await window.g4.mainController.loadLeftPanel("main/config-panels/MultiPanelsLoader", {
-            panels:[{
-                panel:"./PropCapa", panelOptions:{layer}, title:"Propiedades"
-            }]
-        }, layer.name);
+        let panels = [{panel:"./PropCapa", panelOptions:{layer}, title:"Propiedades"}]
+        if (layer.type == "raster") {
+            if (layer.config.shader) {
+                panels.push({panel:"./RasterShader", panelOptions:{layer}, title:"Shader"})
+            }
+        }
+        await window.g4.mainController.loadLeftPanel("main/config-panels/MultiPanelsLoader", {panels}, layer.name);
     }
 
     // Time

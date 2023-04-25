@@ -47,7 +47,7 @@ class G4 {
 
     // Time
     get time() {return this._time}
-    setTime(lx) {
+    setTime(lx, ms=200) {
         this._time = lx;
         if (this.timeChangeTimer) {
             clearTimeout(this.timeChangeTimer);
@@ -55,7 +55,7 @@ class G4 {
         this.timeChangeTimer = setTimeout(async _ => {
             this.timeChangeTimer = null;
             await this.trigger("time-change", this.time);
-        }, 200)        
+        }, ms)        
     }
     incTime(step) {
         this.setTime(this.time.plus(step));
@@ -140,6 +140,11 @@ class G4 {
         let scaleDef = factory.byName(scaleName);
         if (!scaleDef) throw "No se encontró la escala de colores '" + scaleName + "' en el servidor"
         return factory.createScale(scaleDef, scaleConfig);
+    }
+    getGeoserverColorScales(geoserver) {
+        let url = this.getGeoserverURL(geoserver);
+        if (!url) throw "No se encontró el geoserver '" + geoserver + "'";
+        return this.geoServersColorScales[url].colorScales;
     }
 
     onMapClick(e) {
