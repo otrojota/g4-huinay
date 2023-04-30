@@ -5,7 +5,9 @@ class ScalesFactory {
             if (scaleDef.type == "pg") {
                 scaleDef.config.pgContent = await this.fetchFile(geoserverURL + "/" + scaleDef.config.url);
             }
-            this.scaleDefs.push(scaleDef);
+            if (scaleDef.type != "linear-hsl") {
+                this.scaleDefs.push(scaleDef);
+            }
         }
         this.scaleDefs.sort((s1, s2) => (s1.name < s2.name?-1:1))
     }
@@ -110,7 +112,7 @@ class LinearTransparencyScale extends G4ColorScale {
             if (v < 0) v = 0;
             if (v > 1) v = 1;
             let colors = this.colors;
-            color = "rgba(" + colors[0] + ", " + colors[1] + ", " + colors[2] + ", " + v + ")";
+            color = "rgba(" + colors[0] + ", " + colors[1] + ", " + colors[2] + ", " + (v * 255) + ")";
         }
         return color;
     }
@@ -271,17 +273,6 @@ class RangesScale extends G4ColorScale {
             return acum;
         }, {min:undefined, max:undefined})
         this.ranges = [];
-        /*
-        for (let i in this.def.config.ranges) {
-            let r = this.def.config.ranges[i];
-            let rMin = (i == 0?r[0]:this.def.config.ranges[i - 1][0]);
-            rMin = (rMin - min) / (max - min);
-            let rMax = r[0];
-            rMax = (rMax - min) / (max - min);
-            let rr = {min:rMin, max:rMax, color:r[1]}
-            this.ranges.push(rr);
-        }
-        */
         let n = this.def.config.ranges.length;
         for (let i=0; i < n; i++) {
             let r = this.def.config.ranges[i];
@@ -315,6 +306,11 @@ class RangesScale extends G4ColorScale {
             if (v > 1) v = 1;
             let i = parseInt(this.ranges.length / 2);
             color = this.binarySearch(v, i, 0, this.ranges.length - 1);
+            let p0 = color.indexOf("(");
+            let p1 = color.indexOf(")");
+            let [r,g,b,a] = color.substring(p0+1, p1).split(",");            
+            //console.log("color", color, "sbst", color.substring(p0+1, p1), "rgab", r,g,a,b);
+            return "rgba(" + r + "," + g + "," + b + "," + (a * 255) + ")";
         }
         return color;
     }

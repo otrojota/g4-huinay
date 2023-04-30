@@ -1,0 +1,44 @@
+<div class="container p-2">
+    <div class="form-check">
+        <input id="edIsobandasActivas" class="form-check-input" type="checkbox" value="">
+        <label class="form-check-label" for="edIsobandasActivas">
+          Activar Isobandas
+        </label>
+    </div>
+    <hr class="my-1" />
+    <div class="mb-2">
+        <label for="edEscala" class="form-label">Escala de Colores</label>
+        <select id="edEscala" class="form-select form-select-sm" data-z-id-field="name" data-z-label-field="name"></select>
+    </div>
+    <div class="form-check">
+        <input id="edIsobandsAuto" class="form-check-input" type="checkbox" value="">
+        <label class="form-check-label" for="edIsobandsAuto">
+          Límites Automáticos
+        </label>
+    </div>
+    <div class="row mb-2">
+        <div class="col">
+            <label for="edMin" class="form-label">Valor Mínimo</label>
+            <input id="edMin" class="form-control form-control-sm text-end" data-z-autochange-delay="300" />    
+        </div>
+        <div class="col">
+            <label for="edMax" class="form-label">Valor Máximo</label>
+            <input id="edMax" class="form-control form-control-sm text-end" data-z-autochange-delay="300" />    
+        </div>
+    </div>
+    <div class="form-check">
+        <input id="edIsobandsClipOutOfRange" class="form-check-input" type="checkbox" value="">
+        <label class="form-check-label" for="edIsobandsClipOutOfRange">
+          Eliminar Valores fuera del Rango
+        </label>
+    </div>
+    <hr class="my-1" />
+    <div class="mb-2">
+        <label id="lblTipoIncremento" for="edTipoIncremento" class="form-label">Tipo del Incremento</label>
+        <select id="edTipoIncremento" class="form-select form-select-sm" data-z-id-field="code" data-z-label-field="name"></select>
+    </div>
+    <div class="mb-2">
+        <label for="edIncremento" class="form-label">Incremento</label>
+        <input id="edIncremento" class="form-control form-control-sm text-end" type="number" data-z-autochange-delay="500" />    
+    </div>
+</div>

@@ -1,6 +1,13 @@
 class CollapsiblePanel extends ZCustomController {
     async onThis_init(options) {
         this.title.text = options.title;
+        if (options.opened) {
+
+        } else {
+            this.chevron.removeClass("expanded")
+            this.panelLoader.removeClass("expanded");
+            this.panelLoader.hide();
+        }
         await this.panelLoader.load(options.panel, options.panelOptions);
     }
 

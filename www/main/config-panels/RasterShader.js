@@ -58,16 +58,21 @@ class RasterShader extends ZCustomController {
 
     refreshInterpolate() {
         if (this.layer.shaderInterpolate) {
+            this.rowInterpolate.show();
             this.edInterpolate.checked = true;
             this.edMinCols.value = this.layer.shaderInterpolateMinCols;
             this.edMinRows.value = this.layer.shaderInterpolateMinRows;
         } else {
+            this.rowInterpolate.hide();
             this.edInterpolate.checked = false;
             this.edMinCols.value = 300;
             this.edMinRows.value = 200;
         }
     }
-    onEdInterpolate_change() {this.setInterpolate()}
+    onEdInterpolate_change() {
+        this.setInterpolate();
+        this.refreshInterpolate();
+    }
     onEdMinCols_change() {this.setInterpolate()}
     onEdMinRows_change() {this.setInterpolate()}
     setInterpolate() {

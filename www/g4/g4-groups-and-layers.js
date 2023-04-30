@@ -79,6 +79,7 @@ class G4Layer {
     async setStatus(s, error=null) {
         this._status = s;
         this.error = error;
+
         await window.g4.trigger("layer-status-change", this);
     }
 
@@ -89,8 +90,8 @@ class G4Layer {
         }
     }
     _decWorking(newStatus = "data", error = null) {
-        if (!(--this.nWorking)) {            
-            this.setStatus(newStatus, error);
+        if (!(--this.nWorking)) {
+            setTimeout(_ => this.setStatus(newStatus, error), 0);
         }
     }
 

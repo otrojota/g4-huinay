@@ -78,10 +78,9 @@ class MapControls extends ZCustomController {
     async onCmdConfigLayers_click() {
         await window.g4.mainController.loadLeftPanel("main/config-panels/MultiPanelsLoader", {
             panels:[{
-                panel:"./OpacidadCapas", panelOptions:{}, title:"Opacidad Capas"
-            }, {
-                
-                panel:"./MapaBase", panelOptions:{}, title:"Mapa Base"
+                panel:"./OpacidadCapas", panelOptions:{}, title:"Opacidad Capas", opened:true
+            }, {                
+                panel:"./MapaBase", panelOptions:{}, title:"Mapa Base", opened:false
             }]
         }, "Capas Activas");
     }
@@ -119,10 +118,16 @@ class MapControls extends ZCustomController {
         controller.refreshStatus();
     }
     async onLayersContainer_layerConfig(layer) {
-        let panels = [{panel:"./PropCapa", panelOptions:{layer}, title:"Propiedades"}]
+        let panels = [{panel:"./PropCapa", panelOptions:{layer}, title:"Propiedades", opened: true}]
         if (layer.type == "raster") {
             if (layer.config.shader) {
-                panels.push({panel:"./RasterShader", panelOptions:{layer}, title:"Shader"})
+                panels.push({panel:"./RasterShader", panelOptions:{layer}, title:"Visualizador: Shader", opened: false})
+            }
+            if (layer.config.isolines) {
+                panels.push({panel:"./RasterIsolineas", panelOptions:{layer}, title:"Visualizador: Isolineas", opened: false})
+            }
+            if (layer.config.isobands) {
+                panels.push({panel:"./RasterIsobandas", panelOptions:{layer}, title:"Visualizador: Isobandas", opened: false})
             }
         }
         await window.g4.mainController.loadLeftPanel("main/config-panels/MultiPanelsLoader", {panels}, layer.name);

@@ -8,12 +8,15 @@ class G4RasterLayer extends G4Layer {
         let b = window.g4.mapController.getCurrentBounds(0.25);
         let url = `${window.g4.getGeoserverURL(this.config.geoserver)}/${this.dataSetCode}/${this.variableCode}/isolines?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}`;
         if (this.dependsOnTime) url += "&time=" + window.g4.time.valueOf();
+        if (this.isolinesFixedLevels) url += "&fixedLevels=" + this.isolinesFixedLevels;
+        else if (this.isolinesIncrement) url += "&increment=" + this.isolinesIncrement;
         return url;
     }
     get isobandsURL() {
         let b = window.g4.mapController.getCurrentBounds(0.25);
         let url = `${window.g4.getGeoserverURL(this.config.geoserver)}/${this.dataSetCode}/${this.variableCode}/isobands?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}`;
         if (this.dependsOnTime) url += "&time=" + window.g4.time.valueOf();
+        if (this.isobandsIncrement) url += "&increment=" + this.isobandsIncrement;
         return url;
     }
     get gridURL() {
@@ -66,8 +69,7 @@ class G4RasterLayer extends G4Layer {
     }
 
     getFile(url, controller) {
-        return new Promise((resolve, reject) => {
-            
+        return new Promise((resolve, reject) => {            
             this._getJSON(url, controller.signal)
                 .then(json => {
                     resolve(json)
@@ -91,6 +93,7 @@ class G4RasterLayer extends G4Layer {
     }
 
     roundValue(v) {
+        if (v === undefined || v === null) return "";
         let dec = this.variable.options?this.variable.options.decimals:2;
         if (dec === undefined) dec = 2;
         return v.toFixed(dec);
@@ -146,18 +149,33 @@ class G4RasterLayer extends G4Layer {
         }
         if (this.config.particles && this.config.particles.active) {
             drawPromises.push(this.drawParticles());
+        } else if (this.particlesLayer) {
+            this.particlesLayer.remove();
+            this.particlesLayer = null;
         }
         if (this.config.vectors && this.config.vectors.active) {
             drawPromises.push(this.drawVectors());
+        } else if (this.vectorsLayer) {
+            this.vectorsLayer.remove();
+            this.vectorsLayer = null;
         }            
         if (this.config.barbs && this.config.barbs.active) {
             drawPromises.push(this.drawBarbs());
+        } else if (this.barbsLayer) {
+            this.barbsLayer.remove();
+            this.barbsLayer = null;
         }            
         if (this.config.isobands && this.config.isobands.active) {
             drawPromises.push(this.drawIsobands());
+        } else if (this.isobandsLayer) {
+            this.isobandsLayer.remove();
+            this.isobandsLayer = null;
         }            
         if (this.config.isolines && this.config.isolines.active) {
             drawPromises.push(this.drawIsolines());
+        } else if (this.isolinesLayer) {
+            this.isolinesLayer.remove();
+            this.isolinesLayer = null;
         }   
         //await Promise.all(drawPromises);
         Promise.all(drawPromises);
@@ -214,11 +232,8 @@ class G4RasterLayer extends G4Layer {
             if (!this.shaderColorScale) {
                 if (!this.config.shader.colorScale) throw "No hay 'colorScale' para la capa-shader";
                 this.shaderColorScale = window.g4.createColorScale(this.config.geoserver, this.config.shader.colorScale.name, this.config.shader.colorScale);
-                console.log("colorScale", this.shaderColorScale);
             }
-            if (!this.grid) {
-                await this.getFileGrid();
-            }
+            if (!this.grid) await this.getFileGrid();
             this.shaderColorScale.setRange(this.grid.min, this.grid.max);
             if (!this.shaderLayer) {
                 this.shaderLayer = new L.ShaderOverlay({
@@ -257,7 +272,8 @@ class G4RasterLayer extends G4Layer {
                 
                 this.particlesLayer = new L.ParticlesOverlay(opts);
                 this.particlesLayer.addTo(window.g4.mapController.map);
-            }    
+            }
+            if (!this.vectorsGrid) await this.getFileVectorsGrid();
             this.particlesLayer.setVectorsGridData(this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.nrows, this.vectorsGrid.ncols);
         } catch(error) {
             console.error(error);
@@ -280,7 +296,8 @@ class G4RasterLayer extends G4Layer {
                 
                 this.vectorsLayer = new L.VectorsOverlay(opts);
                 this.vectorsLayer.addTo(window.g4.mapController.map);
-            }    
+            }
+            if (!this.vectorsGrid) await this.getFileVectorsGrid();
             this.vectorsLayer.setVectorsGridData(this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.nrows, this.vectorsGrid.ncols);
         } catch(error) {
             console.error(error);
@@ -312,7 +329,8 @@ class G4RasterLayer extends G4Layer {
                 
                 this.barbsLayer = new L.BarbsOverlay(opts);
                 this.barbsLayer.addTo(window.g4.mapController.map);
-            }    
+            } 
+            if (!this.vectorsGrid) await this.getFileVectorsGrid(); 
             this.barbsLayer.setVectorsGridData(this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.nrows, this.vectorsGrid.ncols);
         } catch(error) {
             console.error(error);
@@ -326,6 +344,7 @@ class G4RasterLayer extends G4Layer {
     
     async drawIsobands() {
         try {
+            if (!this.isobandsGeoJson) await this.getFileIsobandsGeoJson();
             if (!this.isobandsColorScale) {
                 if (!this.config.isobands.colorScale) throw "No hay 'colorScale' para la capa-isobandas";
                 this.isobandsColorScale = window.g4.createColorScale(this.config.geoserver, this.config.isobands.colorScale.name, this.config.isobands.colorScale);
@@ -341,7 +360,7 @@ class G4RasterLayer extends G4Layer {
                     opacity: this.getOpacity()
                 })
                 this.isobandsLayer.addTo(window.g4.mapController.map);
-            }            
+            }
             this.isobandsLayer.setGeoJson(this.isobandsGeoJson.geoJson);
         } catch (error) {
             console.error(error);
@@ -366,6 +385,7 @@ class G4RasterLayer extends G4Layer {
                 })
                 this.isolinesLayer.addTo(window.g4.mapController.map);
             } 
+            if (!this.isolinesGeoJson) await this.getFileIsolinesGeoJson();
             this.isolinesLayer.setGeoJson(this.isolinesGeoJson.geoJson);
         } catch (error) {
             console.error(error);
@@ -404,6 +424,11 @@ class G4RasterLayer extends G4Layer {
         if (this.barbsCurrentController) this.barbsCurrentController.abort();
     }
 
+    // Útiles
+    get unit() {
+        return (this.variable && this.variable)?this.variable.unit:null;
+    }
+
     // Seteo de propiedades    
     callRedraw() {
         if (this.redrawTimer) clearTimeout(this.redrawTimer);
@@ -414,6 +439,7 @@ class G4RasterLayer extends G4Layer {
     }
     get geoserver() {return this.config.geoserver}
 
+    // Shader
     get shaderActive() {return this.config.shader && this.config.shader.active}
     set shaderActive(a) {
         if (!this.config.shader) throw "Shader no soportado en capa";
@@ -465,9 +491,104 @@ class G4RasterLayer extends G4Layer {
         } else {
             this.config.shader.interpolate = {minCols, minRows};
         }
-        this.shaderLayer.remove();
-        this.shaderLayer = null;
+        if (this.shaderLayer) {
+            this.shaderLayer.remove();
+            this.shaderLayer = null;
+        }
         this.shaderColorScale = null;
+        this.callRedraw();
+    }
+
+    // Isolines
+    get isolinesActive() {return this.config.isolines && this.config.isolines.active}
+    set isolinesActive(a) {
+        if (!this.config.isolines) throw "Isolines no soportado en capa";
+        this.config.isolines.active = a;
+        this.callRedraw();
+    }
+    get isolinesColor() {return this.config.isolines?this.config.isolines.color:[0,0,0,255]}
+    set isolinesColor(color) {
+        if (!this.config.isolines) throw "Isolines no soportado en capa";
+        this.config.isolines.color = color;
+        this.callRedraw();
+    }
+    get isolinesSmooth() {return this.config.isolines?this.config.isolines.smoothLines:false}
+    set isolinesSmooth(s) {
+        if (!this.config.isolines) throw "Isolines no soportado en capa";
+        this.config.isolines.smoothLines = s;
+        if (this.isolinesLayer) {
+            this.isolinesLayer.remove();
+            this.isolinesLayer = null;
+        }
+        this.callRedraw();
+    }
+    get isolinesFixedLevels() {return this.config.isolines?this.config.isolines.fixedLevels:null}
+    set isolinesFixedLevels(fl) {
+        if (!this.config.isolines) throw "Isolines no soportado en capa";
+        this.config.isolines.fixedLevels = fl;
+        this.config.isolines.increment = null;
+        this.refresh();
+    }
+    get isolinesIncrement() {return this.config.isolines?this.config.isolines.increment:null}
+    set isolinesIncrement(i) {
+        if (!this.config.isolines) throw "Isolines no soportado en capa";
+        this.config.isolines.fixedLevels = null;
+        this.config.isolines.increment = i;
+        this.refresh();
+    }
+    get isolinesCalculatedIncrement() {
+        return this.isolinesGeoJson?this.isolinesGeoJson.increment:null;
+    }
+
+    // Isobands
+    get isobandsActive() {return this.config.isobands && this.config.isobands.active}
+    set isobandsActive(a) {
+        if (!this.config.isobands) throw "Isobands no soportado en capa";
+        this.config.isobands.active = a;
+        this.callRedraw();
+    }
+    get isobandsIncrement() {return this.config.isobands?this.config.isobands.increment:null}
+    set isobandsIncrement(i) {
+        if (!this.config.isobands) throw "Isobands no soportado en capa";
+        this.config.isobands.increment = i;
+        this.refresh();
+    }
+    get isobandsCalculatedIncrement() {
+        return this.isobandsGeoJson?this.isobandsGeoJson.increment:null;
+    }
+    get isobandsColorScaleDef() {return this.config.isobands?this.config.isobands.colorScale:null}
+    set isobandsColorScaleDef(scaleDef) {
+        if (!this.config.isobands) throw "Isobandas no soportado en capa";
+        this.config.isobands.colorScale.name = scaleDef.name;
+        this.isobandsColorScale = null;
+        this.callRedraw();
+    }
+    get isobandsColorScaleAuto() {return this.config.isobands?this.config.isobands.colorScale.auto:false}
+    set isobandsColorScaleAuto(auto) {
+        if (!this.config.isobands) throw "Isobands no soportado en capa";
+        this.config.isobands.colorScale.auto = auto;
+        this.isobandsColorScale = null;
+        this.callRedraw();
+    }
+    get isobandsColorScaleMin() {return this.config.isobands?this.config.isobands.colorScale.min:0}
+    set isobandsColorScaleMin(min) {
+        if (!this.config.isobands) throw "Isobandas no soportado en capa";
+        this.config.isobands.colorScale.min = min;
+        this.isobandsColorScale = null;
+        this.callRedraw();
+    }
+    get isobandsColorScaleMax() {return this.config.isobands?this.config.isobands.colorScale.max:0}
+    set isobandsColorScaleMax(max) {
+        if (!this.config.isobands) throw "Isobandas no soportado en capa";
+        this.config.isobands.colorScale.max = max;
+        this.isobandsColorScale = null;
+        this.callRedraw();
+    }
+    get isobandsColorScaleClipOutOfRange() {return this.config.isobands?this.config.isobands.clipOutOfRange:false}
+    set isobandsColorScaleClipOutOfRange(clip) {
+        if (!this.config.isobands) throw "Isobandas no soportado en capa";
+        this.config.isobands.colorScale.clipOutOfRange = clip;
+        this.isobandsColorScale = null;
         this.callRedraw();
     }
 }

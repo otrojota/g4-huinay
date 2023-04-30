@@ -152,7 +152,7 @@ L.ShaderOverlay = L.CanvasOverlay.extend({
                     v = this.interpolate.call(this, lat, lng, this.box, rows, this.ncols, this.nrows);
                 }                
                 if (!v) {
-                    image.push(255,0,0,255);
+                    image.push(255,0,0,0);
                 } else {
                     let colors = this.options.getColor(v, lat, lng);
                     while (colors.length < 4) colors.push(255);
