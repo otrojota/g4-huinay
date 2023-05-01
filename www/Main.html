@@ -1,12 +1,14 @@
 <div style="height: 100%;">
-    <div id="leftPanel" class="offcanvas offcanvas-start left-panel-container" tabindex="-1" data-bs-backdrop="false" style="overflow-y: auto;">
+    <div id="leftPanel" class="offcanvas offcanvas-start left-panel-container" tabindex="-1" data-bs-backdrop="false" >
         <div id="leftPanelTitle" class="left-panel-title p-2">
             <h5 id="lblLeftPanelTitle" class="mt-2">Título del Panel Izquierdo</h5>
             <button id="cmdCloseLeftPanel" class="btn btn-sm boton-cerrar-offcanvas">
                 <i class="fa-solid fa-xmark fa-2x"></i>
             </button>
         </div>
-        <div id="leftPanelLoader" class="left-panel-content" data-z-load="common/Empty"></div>
+        <div style="overflow-y: auto;">
+            <div id="leftPanelLoader" class="left-panel-content" data-z-load="common/Empty"></div>
+        </div>
     </div>
     <div id="rightPanel" class="offcanvas offcanvas-end right-panel-container" tabindex="-1" data-bs-backdrop="false" style="overflow-y: auto;">
         <div id="rightPanelLoader" data-z-load="common/Empty"></div>

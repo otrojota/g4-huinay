@@ -84,13 +84,13 @@ L.ParticlesOverlay = L.CanvasOverlay.extend({
                 p.p1 = null;
                 p.valid = true;
             }
-            if (!p.p0) p.p0 =  this._map.latLngToContainerPoint([p.lat, p.lng]);
+            if (!p.p0) p.p0 =  this.latLngToCanvas(p.lat, p.lng); // this._map.latLngToContainerPoint([p.lat, p.lng]);
             else p.p0 = p.p1;
             let v = this._getInperpolatedVector.call(this, p.lat, p.lng);
             if (v) {
                 p.lat += v.v * scale;
                 p.lng += v.u * scale;
-                p.p1 =  this._map.latLngToContainerPoint([p.lat, p.lng]);
+                p.p1 = this.latLngToCanvas(p.lat, p.lng); // this._map.latLngToContainerPoint([p.lat, p.lng]);
             } else {
                 p.valid = false;
             }

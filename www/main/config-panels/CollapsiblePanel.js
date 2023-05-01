@@ -18,12 +18,17 @@ class CollapsiblePanel extends ZCustomController {
         if (this.chevron.hasClass("expanded")) {
             this.chevron.removeClass("expanded")
             this.panelLoader.removeClass("expanded");
-            setTimeout(_ => this.panelLoader.hide(), 400);
+            setTimeout(_ => {
+                this.panelLoader.hide();
+                if (this.panelLoader.content.onCollapsed) this.panelLoader.content.onCollapsed();
+            }, 400);
         } else {
             this.chevron.addClass("expanded")
             this.panelLoader.show();
-            setTimeout(_ => this.panelLoader.addClass("expanded"), 10);
-            
+            setTimeout(_ => {
+                this.panelLoader.addClass("expanded");
+                if (this.panelLoader.content.onExpanded) this.panelLoader.content.onExpanded();
+            }, 10);            
         }
     }
 }

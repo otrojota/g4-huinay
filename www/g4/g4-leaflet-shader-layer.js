@@ -1,5 +1,6 @@
 L.ShaderOverlay = L.CanvasOverlay.extend({
     options: {        
+        contextType: "webgl",
         getColor: function(v, lat, lng) {return [255,0,0,50]},
         interpolate: null   // {minCols:150, minRows: 150}
     },

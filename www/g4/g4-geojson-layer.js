@@ -111,7 +111,8 @@ class G4GeoJsonLayer extends G4Layer {
                     polygonBorderColor: feature => (this.getPolygonBorderColor(feature)),
                     polygonColor: feature => (this.getPolygonColor(feature)),
                     zIndex:(this.getOrder() >= 0)?200 + 10 *this.getOrder():-1,
-                    opacity: this.getOpacity()
+                    opacity: this.getOpacity(),
+                    pixelsRatio: 1 // forzar a 1 para ver lineas más gruesas (Limitación de WebGL de ancho = 1)
                 });
                 this.geoJsonLayer.addTo(window.g4.mapController.map);
             }

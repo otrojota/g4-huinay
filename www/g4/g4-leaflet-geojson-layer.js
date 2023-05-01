@@ -1,5 +1,6 @@
 L.GeoJsonOverlay = L.CanvasOverlay.extend({
-    options: {        
+    options: {
+        contextType: "webgl",
         polygonColor: null,
         polygonBorderColor: null,
         lineColor: [0,0,0,255],

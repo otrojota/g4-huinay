@@ -2,6 +2,7 @@ class PropCapa extends ZCustomController {
     onThis_init(options) {
         this.layer = options.layer;
         this.edName.value = this.layer.name;
+        this.edOpacidad.refresh(options.layer);
     }
 
     async onEdName_change() {

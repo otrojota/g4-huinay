@@ -1,6 +1,8 @@
 L.VectorsOverlay = L.CanvasOverlay.extend({
-    options: {        
-        color: [0,0,0,255]
+    options: {       
+        contextType: "webgl", 
+        color: [0,0,0,255],
+        interpolate:null //{nRows:10, nCols:10}
     },
   
     initialize: function (options) {
@@ -78,6 +80,29 @@ L.VectorsOverlay = L.CanvasOverlay.extend({
         if (this.linesColorsBuffer) gl.deleteBuffer(this.linesColorsBuffer);
         if (this.linesProgram) gl.deleteProgram(this.linesProgram);
     },
+    _getInperpolatedVector(lat, lng) {
+        // https://en.wikipedia.org/wiki/Bilinear_interpolation
+        // espacio (0,1)        
+        let b = this.box, rowsU = this.rowsU, rowsV = this.rowsV;
+        if (lat <= b.lat0 || lat >= b.lat1 || lng <= b.lng0 || lng >= b.lng1) return null;
+        let i = parseInt((lng - b.lng0) / b.dLng);
+        let j = parseInt((lat - b.lat0) / b.dLat);
+        if (i >= (this.nCols - 1) || j >= (this.nRows - 1)) return;
+        let x0 = b.lng0 + b.dLng*i;
+        let x = (lng - x0) / b.dLng;
+        let y0 = b.lat0 + b.dLat*j;
+        let y = (lat - y0) / b.dLat;
+        let rx = 1 - x, ry = 1 - y;
+
+        let u00 = rowsU[j][i], u10 = rowsU[j][i+1], u01 = rowsU[j+1][i], u11 = rowsU[j+1][i+1];
+        if (u00 == null || u10 == null || u01 == null || u11 == null) return null;
+        let u = u00*rx*ry + u10*x*ry + u01*rx*y + u11*x*y;
+
+        let v00 = rowsV[j][i], v10 = rowsV[j][i+1], v01 = rowsV[j+1][i], v11 = rowsV[j+1][i+1];
+        if (v00 == null || v10 == null || v01 == null || v11 == null) return null;
+        let v = v00*rx*ry + v10*x*ry + v01*rx*y + v11*x*y;
+        return {u, v};
+    },
     setVectorsGridData:function(box, rowsU, rowsV, nrows, ncols) {
         this.box = box;
         this.rowsU = rowsU;
@@ -85,6 +110,32 @@ L.VectorsOverlay = L.CanvasOverlay.extend({
         this.nRows = nrows;
         this.nCols = ncols;
         this.lines = [];
+
+        if (this.options.interpolate) {
+            let newBox = {
+                lat0: this.box.lat0, lat1:this.box.lat1, 
+                lng0: this.box.lng0, lng1: this.box.lng1,
+                dLat: (this.box.lat1 - this.box.lat0) / this.options.interpolate.nRows,
+                dLng: (this.box.lng1 - this.box.lng0) / this.options.interpolate.nCols
+            }
+            let newRowsU = [], newRowsV = [];
+            for (let iRow=0, lat=this.box.lat0; iRow<this.options.interpolate.nRows; iRow++, lat += newBox.dLat) {
+                newRowsU[iRow] = [];
+                newRowsV[iRow] = [];
+                for (let iCol=0, lng=this.box.lng0; iCol<this.options.interpolate.nCols; iCol++, lng += newBox.dLng) {
+                    let ret = this._getInperpolatedVector(lat, lng);
+                    let u=null, v=null;
+                    if (ret) {u = ret.u; v = ret.v;}
+                    newRowsU[iRow].push(u);
+                    newRowsV[iRow].push(v);
+                }
+            }
+            this.box = newBox;
+            this.rowsU = newRowsU;
+            this.rowsV = newRowsV;
+            this.nRows = this.options.interpolate.nRows;
+            this.nCols = this.options.interpolate.nCols;
+        }
 
         this.rowsMagnitudes = [];
         this.maxMagnitud = undefined;
@@ -141,6 +192,9 @@ L.VectorsOverlay = L.CanvasOverlay.extend({
             p.y = (p.y - p0.y) / h * 2 - 1;
             return p;
         }
+        let color = [...this.options.color];
+        while(color.length < 4) color.push(255);
+        color[0] /= 255; color[1] /= 255; color[2] /= 255; color[3] /= 255;
         let linePoints=[], lineColors=[];
         let lng = this.box.lng0, lat = this.box.lat0;
         for (let iRow=0; iRow<this.nRows; iRow++) {
@@ -155,7 +209,6 @@ L.VectorsOverlay = L.CanvasOverlay.extend({
                     if (isNaN(scale)) scale = 1;
                     let len = maxLen * scale;
                     let p = this._map.latLngToContainerPoint([lat, lng]);                    
-                    let color = this.options.color;
                     let a0 = {x: p.x - len/2, y: p.y};
                     let a1 = {x: p.x + len/2, y: p.y};
                     let alenx = len / 5;

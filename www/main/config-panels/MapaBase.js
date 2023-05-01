@@ -18,5 +18,10 @@ class MapaBase extends ZCustomController {
         this.baseMapLayer = L.tileLayer(map.url, {attribution: map.attribution});
         this.baseMapLayer.addTo(this.map);
     }
+    onExpanded() {
+        console.log("expanded");
+        if (this.map) this.map.invalidateSize();
+        this.map.fitBounds(window.g4.mapController.map.getBounds());
+    }
 }
 ZVC.export(MapaBase);

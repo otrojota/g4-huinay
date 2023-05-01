@@ -129,6 +129,15 @@ class MapControls extends ZCustomController {
             if (layer.config.isobands) {
                 panels.push({panel:"./RasterIsobandas", panelOptions:{layer}, title:"Visualizador: Isobandas", opened: false})
             }
+            if (layer.config.particles) {
+                panels.push({panel:"./RasterParticulas", panelOptions:{layer}, title:"Visualizador: Partículas", opened: false})
+            }
+            if (layer.config.vectors) {
+                panels.push({panel:"./RasterVectores", panelOptions:{layer}, title:"Visualizador: Vectores", opened: false})
+            }
+            if (layer.config.barbs) {
+                panels.push({panel:"./RasterBarbas", panelOptions:{layer}, title:"Visualizador: Barbas", opened: false})
+            }
         }
         await window.g4.mainController.loadLeftPanel("main/config-panels/MultiPanelsLoader", {panels}, layer.name);
     }

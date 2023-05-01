@@ -6,6 +6,7 @@ class RasterIsolineas extends ZCustomController {
         let color = this.layer.isolinesColor;
         while (color.length < 4) color.push(255);
         this.edColorLineas.value = this.rgbArrayToHex(color);
+        this.edColorLineas.view.addEventListener("input", e => this.onEdColorLineas_change())
         this.edOpacidadLineas.value = color[3];
         let tipoIncremento = "auto";
         if (this.layer.isolinesFixedLevels) tipoIncremento = "fixedLevels";
@@ -62,7 +63,7 @@ class RasterIsolineas extends ZCustomController {
             let valor = this.layer.isolinesCalculatedIncrement || "";
             this.edIncremento.value = valor;
             this.edIncremento.disable();
-            if (this.layer.isolinesIncrement) this.layer.isolinesIncrement = null;
+            if (this.layer.isolinesIncrement || this.layer.isolinesFixedLevels) this.layer.isolinesIncrement = null;
         } else if (tipo == "fixed") {
             this.filaIncremento.show();
             this.filaFixedLevels.hide();

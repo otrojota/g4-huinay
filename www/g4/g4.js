@@ -35,13 +35,15 @@ class G4 {
     async trigger(eventName, data) {
         let listeners = this.eventListeners[eventName];
         if (!listeners) return;
-        for (let listener of listeners) {
-            try {
+        let promises = [];
+        try {
+            for (let listener of listeners) {
                 let r = listener(data);
-                if (r instanceof Promise) await r;
-            } catch(error) {
-                console.error(error);
+                if (r instanceof Promise) promises.push(r);
             }
+            if (promises.length) await Promise.all(promises);
+        } catch(error) {
+            console.error(error);
         }
     }
 

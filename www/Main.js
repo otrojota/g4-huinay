@@ -27,10 +27,20 @@ class Main extends ZCustomController {
             let layer = G4Layer.createFromDefinition(layerDefinition);
             await window.g4.getActiveGroup().addLayer(layer);
         }
+        let promises = [];
         for (let layer of window.g4.getLayers()) {
-            await layer.g4init();
-            await layer.refresh();
+            promises.push(
+                new Promise(async (resolve, reject) => {
+                    try {
+                        await layer.g4init();
+                        await layer.refresh();            
+                    } catch(error) {
+                        reject(error);
+                    }
+                })
+            );
         }
+        await Promise.all(promises);
     }
 
     onCmdCloseLeftPanel_click() {this.closeLeftPanel()}

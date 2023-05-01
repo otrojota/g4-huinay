@@ -45,6 +45,8 @@ class G4RasterLayer extends G4Layer {
         if (this.isolinesLayer) {
             this.isolinesLayer.remove();
             this.isolinesLayer = null;
+            this.isolinesMarkersLayer.remove();
+            this.isolinesMarkersLayer = null;
         }
         if (this.isobandsLayer) {
             this.isobandsLayer.remove();
@@ -176,6 +178,8 @@ class G4RasterLayer extends G4Layer {
         } else if (this.isolinesLayer) {
             this.isolinesLayer.remove();
             this.isolinesLayer = null;
+            this.isolinesMarkersLayer.remove();
+            this.isolinesMarkersLayer = null;
         }   
         //await Promise.all(drawPromises);
         Promise.all(drawPromises);
@@ -259,7 +263,7 @@ class G4RasterLayer extends G4Layer {
         try {
             if (!this.particlesLayer) {
                 let opts = {
-                    zIndex:(this.getOrder() >= 0)?203 + 10 *this.getOrder():-1,
+                    zIndex:(this.getOrder() >= 0)?204 + 10 *this.getOrder():-1,
                     opacity: this.getOpacity()                        
                 }                    
                 if (this.config.particles.color) opts.color = this.config.particles.color;
@@ -289,11 +293,15 @@ class G4RasterLayer extends G4Layer {
         try {
             if (!this.vectorsLayer) {
                 let opts = {
-                    zIndex:(this.getOrder() >= 0)?204 + 10 *this.getOrder():-1,
-                    opacity: this.getOpacity()                        
-                }                    
-                if (this.config.vectors.color) opts.color = this.config.vectors.color;
-                
+                    zIndex:(this.getOrder() >= 0)?205 + 10 *this.getOrder():-1,
+                    opacity: this.getOpacity(),
+                    pixelsRatio: 1 // forzar a 1 para ver lineas más gruesas (Limitación de WebGL de ancho = 1)  
+                }
+                if (this.config.vectors.color) {
+                    opts.color = this.config.vectors.color;
+                    while(opts.color.length < 4) opts.color.push(255);
+                }
+                if (this.vectorsInterpolate) opts.interpolate = {nRows: this.vectorsInterpolateRows, nCols: this.vectorsInterpolateCols}
                 this.vectorsLayer = new L.VectorsOverlay(opts);
                 this.vectorsLayer.addTo(window.g4.mapController.map);
             }
@@ -313,8 +321,9 @@ class G4RasterLayer extends G4Layer {
         try {
             if (!this.barbsLayer) {
                 let opts = {
-                    zIndex:(this.getOrder() >= 0)?205 + 10 *this.getOrder():-1,
-                    opacity: this.getOpacity()                        
+                    zIndex:(this.getOrder() >= 0)?206 + 10 *this.getOrder():-1,
+                    opacity: this.getOpacity(),
+                    pixelsRatio: 1 // forzar a 1 para ver lineas más gruesas (Limitación de WebGL de ancho = 1)                     
                 }                    
                 if (this.config.barbs.color) opts.color = this.config.barbs.color;
                 if (this.config.barbs.transformMagnitude) {
@@ -326,6 +335,7 @@ class G4RasterLayer extends G4Layer {
                         opts.transformMagnitude = null;
                     }
                 }
+                if (this.barbsInterpolate) opts.interpolate = {nRows: this.barbsInterpolateRows, nCols: this.barbsInterpolateCols}
                 
                 this.barbsLayer = new L.BarbsOverlay(opts);
                 this.barbsLayer.addTo(window.g4.mapController.map);
@@ -381,19 +391,49 @@ class G4RasterLayer extends G4Layer {
                     },
                     smoothLines: this.config.isolines.smoothLines?true:false,
                     zIndex:(this.getOrder() >= 0)?202 + 10 *this.getOrder():-1,
-                    opacity: this.getOpacity()
+                    opacity: this.getOpacity(),
+                    pixelsRatio: 1 // forzar a 1 para ver lineas más gruesas (Limitación de WebGL de ancho = 1)
                 })
                 this.isolinesLayer.addTo(window.g4.mapController.map);
+                this.isolinesMarkersLayer = new L.CanvasOverlay({
+                    zIndex:(this.getOrder() >= 0)?203 + 10 *this.getOrder():-1,
+                    drawCallback: (canvas, map) => this.drawIsolinesLabels(canvas, map)
+                })
+                this.isolinesMarkersLayer.addTo(window.g4.mapController.map);
             } 
             if (!this.isolinesGeoJson) await this.getFileIsolinesGeoJson();
             this.isolinesLayer.setGeoJson(this.isolinesGeoJson.geoJson);
+            this.isolinesMarkersLayer.redraw();
         } catch (error) {
             console.error(error);
             if (this.isolinesLayer) {
                 this.isolinesLayer.remove();
                 this.isolinesLayer = null;
+                this.isolinesMarkersLayer.remove();
+                this.isolinesMarkersLayer = null;
+
             }
             throw error;
+        }
+    }
+
+    drawIsolinesLabels(canvas, map) {
+        if (!this.isolinesGeoJson) return;
+        let canvasLayer = this.isolinesMarkersLayer;
+        canvasLayer.setFont(10, "Arial");       
+        canvasLayer.clear(); 
+        let c = this.isolinesColor;
+        while (c.length < 4) c.push(255);
+        let [r,g,b,a] = c;
+        let alpha = a/255;
+        let luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        let textColor = luminance > 128?"rgba(0,0,0," + alpha + ")":"rgba(255,255,255," + alpha + ")";
+        let fillColor = `rgba(${r},${g},${b},${alpha})`;
+        let borderColor = textColor;
+        let borderRadius = 10;
+        for (let m of (this.isolinesGeoJson.markers || [])) {            
+            let st = this.roundValue(m.value);
+            canvasLayer.drawRoundedRectLabel(m.lat, m.lng, st, borderColor, fillColor, textColor, borderRadius);
         }
     }
 
@@ -401,15 +441,17 @@ class G4RasterLayer extends G4Layer {
         if (this.shaderLayer) this.shaderLayer.setZIndex((this.getOrder() >= 0)?200 + 10 *this.getOrder():-1);        
         if (this.isobandsLayer) this.isobandsLayer.setZIndex((this.getOrder() >= 0)?201 + 10 *this.getOrder():-1);
         if (this.isolinesLayer) this.isolinesLayer.setZIndex((this.getOrder() >= 0)?202 + 10 *this.getOrder():-1);
-        if (this.particlesLayer) this.particlesLayer.setZIndex((this.getOrder() >= 0)?203 + 10 *this.getOrder():-1);
-        if (this.vectorsLayer) this.vectorsLayer.setZIndex((this.getOrder() >= 0)?204 + 10 *this.getOrder():-1);
-        if (this.barbsLayer) this.barbsLayer.setZIndex((this.getOrder() >= 0)?205 + 10 *this.getOrder():-1);
+        if (this.isolinesMarkersLayer) this.isolinesMarkersLayer.setZIndex((this.getOrder() >= 0)?203 + 10 *this.getOrder():-1);
+        if (this.particlesLayer) this.particlesLayer.setZIndex((this.getOrder() >= 0)?204 + 10 *this.getOrder():-1);
+        if (this.vectorsLayer) this.vectorsLayer.setZIndex((this.getOrder() >= 0)?205 + 10 *this.getOrder():-1);
+        if (this.barbsLayer) this.barbsLayer.setZIndex((this.getOrder() >= 0)?206 + 10 *this.getOrder():-1);
     }
     setOpacity(o) {
         this._opacity = o;
         if (this.shaderLayer) this.shaderLayer.setOpacity(o);
         if (this.isobandsLayer) this.isobandsLayer.setOpacity(o);
         if (this.isolinesLayer) this.isolinesLayer.setOpacity(o);
+        if (this.isolinesMarkersLayer) this.isolinesMarkersLayer.setOpacity(o);
         if (this.particlesLayer) this.particlesLayer.setOpacity(o);
         if (this.vectorsLayer) this.vectorsLayer.setOpacity(o);
         if (this.barbsLayer) this.barbsLayer.setOpacity(o);
@@ -519,6 +561,8 @@ class G4RasterLayer extends G4Layer {
         if (this.isolinesLayer) {
             this.isolinesLayer.remove();
             this.isolinesLayer = null;
+            this.isolinesMarkersLayer.remove();
+            this.isolinesMarkersLayer = null;
         }
         this.callRedraw();
     }
@@ -589,6 +633,126 @@ class G4RasterLayer extends G4Layer {
         if (!this.config.isobands) throw "Isobandas no soportado en capa";
         this.config.isobands.colorScale.clipOutOfRange = clip;
         this.isobandsColorScale = null;
+        this.callRedraw();
+    }
+
+    // Particles
+    get particlesActive() {return this.config.particles && this.config.particles.active}
+    set particlesActive(a) {
+        if (!this.config.particles) throw "Partículas no soportado en capa";
+        this.config.particles.active = a;
+        this.callRedraw();
+    }
+    get particlesColor() {return this.config.particles?this.config.particles.color:[0,0,0,255]}
+    set particlesColor(color) {
+        if (!this.config.particles) throw "Partículas no soportado en capa";
+        this.config.particles.color = color;
+        if (this.particlesLayer) this.particlesLayer.remove();
+        this.particlesLayer = null;
+        this.callRedraw();
+    }
+    get particlesParticles() {return this.config.particles?this.config.particles.particles:800}
+    set particlesParticles(n) {
+        if (!this.config.particles) throw "Partículas no soportado en capa";
+        this.config.particles.particles = n;
+        if (this.particlesLayer) this.particlesLayer.remove();
+        this.particlesLayer = null;
+        this.callRedraw();
+    }
+    get particlesWidth() {return this.config.particles?this.config.particles.width:1}
+    set particlesWidth(w) {
+        if (!this.config.particles) throw "Partículas no soportado en capa";
+        this.config.particles.width = w;
+        if (this.particlesLayer) this.particlesLayer.remove();
+        this.particlesLayer = null;
+        this.callRedraw();
+    }
+    get particlesFade() {return this.config.particles?this.config.particles.fade:0.96}
+    set particlesFade(f) {
+        if (!this.config.particles) throw "Partículas no soportado en capa";
+        this.config.particles.fade = f;
+        if (this.particlesLayer) this.particlesLayer.remove();
+        this.particlesLayer = null;
+        this.callRedraw();
+    }
+    get particlesVelocityScale() {return this.config.particles?this.config.particles.velocityScale:0.002}
+    set particlesVelocityScale(v) {
+        if (!this.config.particles) throw "Partículas no soportado en capa";
+        this.config.particles.velocityScale = v;
+        if (this.particlesLayer) this.particlesLayer.remove();
+        this.particlesLayer = null;
+        this.callRedraw();
+    }
+    get particlesDuration() {return this.config.particles?this.config.particles.duration:20}
+    set particlesDuration(d) {
+        if (!this.config.particles) throw "Partículas no soportado en capa";
+        this.config.particles.duration = d;
+        if (this.particlesLayer) this.particlesLayer.remove();
+        this.particlesLayer = null;
+        this.callRedraw();
+    }
+ 
+    // Vectors
+    get vectorsActive() {return this.config.vectors && this.config.vectors.active}
+    set vectorsActive(a) {
+        if (!this.config.vectors) throw "Vectores no soportado en capa";
+        this.config.vectors.active = a;
+        this.callRedraw();
+    }
+    get vectorsColor() {return this.config.vectors?this.config.vectors.color:[0,0,200,255]}
+    set vectorsColor(color) {
+        if (!this.config.vectors) throw "Vectores no soportado en capa";
+        this.config.vectors.color = color;
+        if (this.vectorsLayer) this.vectorsLayer.remove();
+        this.vectorsLayer = null;
+        this.callRedraw();
+    }
+    get vectorsInterpolate() {return this.config.vectors?this.config.vectors.interpolate:null}
+    get vectorsInterpolateCols() {return (this.config.vectors && this.config.vectors.interpolate)?this.config.vectors.interpolate.cols:20}
+    get vectorsInterpolateRows() {return (this.config.vectors && this.config.vectors.interpolate)?this.config.vectors.interpolate.rows:15}
+    setVectorsInterpolation(cols, rows) {
+        if (!this.config.vectors) throw "Vectors no soportado en capa";
+        if (cols === undefined || rows === undefined) {
+            delete this.config.vectors.interpolate;    
+        } else {
+            this.config.vectors.interpolate = {cols, rows};
+        }
+        if (this.vectorsLayer) {
+            this.vectorsLayer.remove();
+            this.vectorsLayer = null;
+        }
+        this.callRedraw();
+    }
+
+    // Barbs
+    get barbsActive() {return this.config.barbs && this.config.barbs.active}
+    set barbsActive(a) {
+        if (!this.config.barbs) throw "Barbas no soportado en capa";
+        this.config.barbs.active = a;
+        this.callRedraw();
+    }
+    get barbsColor() {return this.config.barbs?this.config.barbs.color:[0,0,0,255]}
+    set barbsColor(color) {
+        if (!this.config.barbs) throw "Barbas no soportado en capa";
+        this.config.barbs.color = color;
+        if (this.barbsLayer) this.barbsLayer.remove();
+        this.barbsLayer = null;
+        this.callRedraw();
+    }
+    get barbsInterpolate() {return this.config.barbs?this.config.barbs.interpolate:null}
+    get barbsInterpolateCols() {return (this.config.barbs && this.config.barbs.interpolate)?this.config.barbs.interpolate.cols:20}
+    get barbsInterpolateRows() {return (this.config.barbs && this.config.barbs.interpolate)?this.config.barbs.interpolate.rows:15}
+    setBarbsInterpolation(cols, rows) {
+        if (!this.config.vectors) throw "Barbas no soportado en capa";
+        if (cols === undefined || rows === undefined) {
+            delete this.config.barbs.interpolate;    
+        } else {
+            this.config.barbs.interpolate = {cols, rows};
+        }
+        if (this.barbsLayer) {
+            this.barbsLayer.remove();
+            this.barbsLayer = null;
+        }
         this.callRedraw();
     }
 }
