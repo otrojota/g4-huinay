@@ -72,6 +72,9 @@ class G4Layer {
         throw "No se sobreescribió type para capa";
     }
     get dependsOnTime() {return false;}
+    get levels() {return null}
+    get levelIndex() {return null}
+    set levelIndex(idx) {}
     async g4init() {}
     async g4destroy() {}
 

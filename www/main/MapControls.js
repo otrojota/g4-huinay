@@ -90,7 +90,7 @@ class MapControls extends ZCustomController {
             let layer = G4Layer.createFromDefinition(layerDef);
             await window.g4.getActiveGroup().addLayer(layer);
             await layer.g4init();
-            await layer.refresh();
+            layer.refresh();
         })
     }
 

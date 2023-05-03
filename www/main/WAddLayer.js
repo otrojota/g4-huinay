@@ -5,6 +5,9 @@ const layerIcons = {
 class WAddLayer extends ZDialog {
     onThis_init() {
         this.refresh();
+        let h = window.innerHeight * 4/5 - 200;
+        if (h < 200) h = 200;
+        this.layersContainer.view.style["max-height"] = h + "px";
         setTimeout(_ => this.edSearch.edSearch.view.focus(), 500);
     }
     onCmdCloseDialog_click() {this.cancel()}

@@ -3,6 +3,15 @@ class PropCapa extends ZCustomController {
         this.layer = options.layer;
         this.edName.value = this.layer.name;
         this.edOpacidad.refresh(options.layer);
+        if (this.layer.levels) {
+            this.filaLevels.show();
+            this.edLevel.setRows(
+                this.layer.levels.map((l, idx) => ({index:idx, name:l})),
+                this.layer.levelIndex
+            )
+        } else {
+            this.filaLevels.hide();
+        }
     }
 
     async onEdName_change() {
@@ -18,5 +27,6 @@ class PropCapa extends ZCustomController {
             await window.g4.mainController.closeLeftPanel();
         })
     }
+    onEdLevel_change() {this.layer.levelIndex = parseInt(this.edLevel.value)}
 }
 ZVC.export(PropCapa);

@@ -1,7 +1,7 @@
 L.ParticlesOverlay = L.CanvasOverlay.extend({
     options: {        
         paths: 800,
-        color: 'blue', // html-color | function colorFor(value) [e.g. chromajs.scale]
+        color: [255,0,0,255], // html-color | function colorFor(value) [e.g. chromajs.scale]
         width: 1.0, // number | function widthFor(value)
         fade: 0.96, // 0 to 1
         duration: 20, // milliseconds per 'frame'
@@ -123,6 +123,8 @@ L.ParticlesOverlay = L.CanvasOverlay.extend({
             
             ctx.fillStyle = `rgba(0, 0, 0, ${this.options.fade})`;
             ctx.lineWidth = this.options.width;
+            let color = this.options.color;
+            while(color.length < 4) color.push(255);
             let [r,g,b,a] = this.options.color;
             ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
             this.paths.forEach(p => {

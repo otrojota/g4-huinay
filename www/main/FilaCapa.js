@@ -1,7 +1,6 @@
 class FilaCapa extends ZCustomController {
     onThis_init(layer) {
         this.layer = layer;
-        this.lblLayerName.text = this.layer.name;
         this.refreshStatus();
         this.cursorInside = false;
         this.mouseDown = false;
@@ -21,7 +20,15 @@ class FilaCapa extends ZCustomController {
         })
     }
 
+    refreshName() {
+        let st = this.layer.name;
+        if (this.layer.levels) {
+            st += " [" + this.layer.levels[this.layer.levelIndex] + "]";
+        }
+        this.lblLayerName.text = st;
+    }
     refreshStatus() {
+        this.refreshName();
         let s = this.layer.getStatus();
         let icon = "fa-regular fa-circle-question";
         if (s == "working") icon = "fas fa-spin fa-spinner";

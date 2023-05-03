@@ -10,6 +10,10 @@ class G4RasterLayer extends G4Layer {
         if (this.dependsOnTime) url += "&time=" + window.g4.time.valueOf();
         if (this.isolinesFixedLevels) url += "&fixedLevels=" + this.isolinesFixedLevels;
         else if (this.isolinesIncrement) url += "&increment=" + this.isolinesIncrement;
+        if (this.variable.levels) {
+            if (this.config._levelIndex === undefined) this.config._levelIndex = this.config.defaultLevel || 0;
+            url += "&level=" + this.config._levelIndex;
+        }
         return url;
     }
     get isobandsURL() {
@@ -17,19 +21,37 @@ class G4RasterLayer extends G4Layer {
         let url = `${window.g4.getGeoserverURL(this.config.geoserver)}/${this.dataSetCode}/${this.variableCode}/isobands?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}`;
         if (this.dependsOnTime) url += "&time=" + window.g4.time.valueOf();
         if (this.isobandsIncrement) url += "&increment=" + this.isobandsIncrement;
+        if (this.variable.levels) {
+            if (this.config._levelIndex === undefined) this.config._levelIndex = this.config.defaultLevel || 0;
+            url += "&level=" + this.config._levelIndex;
+        }
         return url;
     }
     get gridURL() {
         let b = window.g4.mapController.getCurrentBounds(0.25);
         let url = `${window.g4.getGeoserverURL(this.config.geoserver)}/${this.dataSetCode}/${this.variableCode}/grid?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}&margin=2`;
         if (this.dependsOnTime) url += "&time=" + window.g4.time.valueOf();
+        if (this.variable.levels) {
+            if (this.config._levelIndex === undefined) this.config._levelIndex = this.config.defaultLevel || 0;
+            url += "&level=" + this.config._levelIndex;
+        }
         return url;
     }
     get vectorsGridURL() {
         let b = window.g4.mapController.getCurrentBounds(0.25);
         let url = `${window.g4.getGeoserverURL(this.config.geoserver)}/${this.dataSetCode}/${this.variableCode}/vectorsGrid?n=${b.n}&s=${b.s}&e=${b.e}&w=${b.w}`;
         if (this.dependsOnTime) url += "&time=" + window.g4.time.valueOf();
+        if (this.variable.levels) {
+            if (this.config._levelIndex === undefined) this.config._levelIndex = this.config.defaultLevel || 0;
+            url += "&level=" + this.config._levelIndex;
+        }
         return url;
+    }
+    get levels() {return (this.variable && this.variable.levels)?this.variable.levels:null}
+    get levelIndex() {return this.config._levelIndex}
+    set levelIndex(idx) {
+        this.config._levelIndex = idx;
+        this.refresh();
     }
 
     constructor(name, config) {

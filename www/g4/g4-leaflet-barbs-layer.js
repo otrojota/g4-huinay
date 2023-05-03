@@ -283,11 +283,11 @@ L.BarbsOverlay = L.CanvasOverlay.extend({
                             rest -= 5;
                         }
                     }
-                    let step = len / 6;
+                    let step = len / 5;
                     let lSum = b0.x, barDirection = Math.sign(lat);
                     segments.forEach((s, idx) => {
                         if (s.type == "50") {
-                            if (idx > 0) lSum += step;
+                            if (idx > 0) lSum += step * 2;
                             let s0 = {x:lSum, y:b0.y};
                             let s1 = {x:lSum - step, y:b0.y - 2*step*barDirection};
                             let s2 = {x:lSum - step, y:b0.y};

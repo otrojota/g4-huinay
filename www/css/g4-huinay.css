@@ -1,3 +1,6 @@
+.modal {
+    z-index: 100000;
+}
 .map-controls-container {
     position: absolute;
     top: 10px; left: 10px;    
@@ -81,6 +84,9 @@
     border: 1px solid gray;
     padding-top: 7px;
     padding-left: 5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 .grabbable {
     cursor: move; /* fallback if grab cursor is unsupported */
