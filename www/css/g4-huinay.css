@@ -1,15 +1,52 @@
 .modal {
     z-index: 100000;
 }
-.map-controls-container {
+.map-controls-collapser {
     position: absolute;
     top: 10px; left: 10px;    
-    width: 320px; 
+    width: 320px; height: 40px;
     background-color: rgba(120, 120, 120, 0.5);
-    border-radius: 5px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
     border-color: darkgray;
     border-width: 1px;
     z-index: 99999;
+    transition: 0.5s all;
+}
+.map-controls-collapser.collapsed {
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    height: 45px;
+}
+.map-controls-collapser i {
+    transition: 0.3s ease-in-out;
+}
+.map-controls-collapser i.expanded {
+    transform: rotate(90deg);
+}
+.map-controls-collapser-label {
+    position: absolute;
+    font-size: 16px;
+    color: white;
+    border: 1px solid black;
+}
+
+.map-controls-container {
+    position: absolute;
+    top: 50px; left: 10px;    
+    width: 320px; 
+    background-color: rgba(120, 120, 120, 0.5);
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-color: darkgray;
+    border-width: 1px;
+    z-index: 99999;
+    opacity: 0;
+    transition: 0.5s all;
+}
+.map-controls-container.expanded {
+    opacity: 1;
+    display: block;
 }
 
 .map-control-button {
@@ -56,11 +93,27 @@
 }
 .right-panel-container {
     z-index: 100000;
-    opacity: 0.8;
+    opacity: 0.9;
+    background-color: rgb(240,240,240);
 }
+.right-panel-title {
+    text-align: left;
+    border-bottom: 0.5px solid gray;
+    background-color: lightgray;
+}
+.right-panel-content {
+    padding: 5px;
+}
+
 .boton-cerrar-offcanvas {
     position: absolute;
     right: 10px; top: 10px;
+    width: 40px;
+    height: 40px;
+}
+.boton-cerrar-offcanvas-right {
+    position: absolute;
+    left: 10px; top: 10px;
     width: 40px;
     height: 40px;
 }

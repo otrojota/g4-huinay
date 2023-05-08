@@ -1,18 +1,13 @@
 class MapControls extends ZCustomController {
     g4init() {
+        this.setExpanded();
+
         let lx = new luxon.DateTime({}, {zone: window.config.timeZone, locale: window.config.locale});        
         lx = lx.startOf("hour");
         lx.setLocale(window.config.locale);        
         window.g4.setTime(lx, 0);
         this.refreshTime();
 
-        window.g4.on("left-panel-opened", _ => {
-            let w = window.g4.mainController.leftPanel.view.offsetWidth;
-            this.controlsContainer.view.style.left = (10 + w) + "px";
-        })
-        window.g4.on("left-panel-closed", _ => {
-            this.controlsContainer.view.style.left = "10px";
-        })
         window.g4.on("layer-added", _ => {
             this.callRefreshLayers();
         })
@@ -67,6 +62,9 @@ class MapControls extends ZCustomController {
         this.refreshLayers();
     }
 
+    setExpanded() {this.controlsContainer.addClass("expanded")}
+    setCollapsed() {this.controlsContainer.removeClass("expanded")}
+
     refreshTime() {
         this.lblDay.text = window.g4.time.toFormat("dd/MM/yyyy");
         this.lblHour.text = window.g4.time.toFormat("HH:mm");
@@ -76,11 +74,11 @@ class MapControls extends ZCustomController {
     onCmdZoomOut_click() {window.g4.mapController.zoomOut()}
 
     async onCmdConfigLayers_click() {
-        await window.g4.mainController.loadLeftPanel("main/config-panels/MultiPanelsLoader", {
+        await window.g4.mainController.loadLeftPanel("main/MultiPanelsLoader", {
             panels:[{
-                panel:"./OpacidadCapas", panelOptions:{}, title:"Opacidad Capas", opened:true
+                panel:"./config-panels/OpacidadCapas", panelOptions:{}, title:"Opacidad Capas", opened:true
             }, {                
-                panel:"./MapaBase", panelOptions:{}, title:"Mapa Base", opened:false
+                panel:"./config-panels/MapaBase", panelOptions:{}, title:"Mapa Base", opened:false
             }]
         }, "Capas Activas");
     }
@@ -118,28 +116,30 @@ class MapControls extends ZCustomController {
         controller.refreshStatus();
     }
     async onLayersContainer_layerConfig(layer) {
-        let panels = [{panel:"./PropCapa", panelOptions:{layer}, title:"Propiedades", opened: true}]
+        let panels = [{panel:"./config-panels/PropCapa", panelOptions:{layer}, title:"Propiedades", opened: true}]
         if (layer.type == "raster") {
             if (layer.config.shader) {
-                panels.push({panel:"./RasterShader", panelOptions:{layer}, title:"Visualizador: Shader", opened: false})
+                panels.push({panel:"./config-panels/RasterShader", panelOptions:{layer}, title:"Visualizador: Shader", opened: false})
             }
             if (layer.config.isolines) {
-                panels.push({panel:"./RasterIsolineas", panelOptions:{layer}, title:"Visualizador: Isolineas", opened: false})
+                panels.push({panel:"./config-panels/RasterIsolineas", panelOptions:{layer}, title:"Visualizador: Isolineas", opened: false})
             }
             if (layer.config.isobands) {
-                panels.push({panel:"./RasterIsobandas", panelOptions:{layer}, title:"Visualizador: Isobandas", opened: false})
+                panels.push({panel:"./config-panels/RasterIsobandas", panelOptions:{layer}, title:"Visualizador: Isobandas", opened: false})
             }
             if (layer.config.particles) {
-                panels.push({panel:"./RasterParticulas", panelOptions:{layer}, title:"Visualizador: Partículas", opened: false})
+                panels.push({panel:"./config-panels/RasterParticulas", panelOptions:{layer}, title:"Visualizador: Partículas", opened: false})
             }
             if (layer.config.vectors) {
-                panels.push({panel:"./RasterVectores", panelOptions:{layer}, title:"Visualizador: Vectores", opened: false})
+                panels.push({panel:"./config-panels/RasterVectores", panelOptions:{layer}, title:"Visualizador: Vectores", opened: false})
             }
             if (layer.config.barbs) {
-                panels.push({panel:"./RasterBarbas", panelOptions:{layer}, title:"Visualizador: Barbas", opened: false})
+                panels.push({panel:"./config-panels/RasterBarbas", panelOptions:{layer}, title:"Visualizador: Barbas", opened: false})
             }
+        } else if (layer.type == "geojson") {
+            panels.push({panel:"./config-panels/GeoJsonColors", panelOptions:{layer}, title:"Color Elementos", opened: true})
         }
-        await window.g4.mainController.loadLeftPanel("main/config-panels/MultiPanelsLoader", {panels}, layer.name);
+        await window.g4.mainController.loadLeftPanel("main/MultiPanelsLoader", {panels}, layer.name);
     }
 
     // Time

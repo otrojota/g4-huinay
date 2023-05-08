@@ -11,7 +11,7 @@ class G4 {
         this.geoServersMetadata = {};   // {url: metadata}
         this.geoServersColorScales = {};// {url: ScalesFactory}
 
-        this.on("map-click", e => this.onMapClick(e));
+        
     }
 
     // Centralized Event Handling
@@ -110,6 +110,12 @@ class G4 {
     getLayers() {
         return this.getActiveGroup().layers;
     }
+    getLayersFromTop() {
+        let layers = this.getLayers();
+        let ret = [];
+        for (let i=layers.length - 1; i>=0; i--) ret.push(layers[i]);
+        return ret;
+    }
 
     // Geoservers
     async getGeoserverMetadata(url) {
@@ -147,14 +153,6 @@ class G4 {
         let url = this.getGeoserverURL(geoserver);
         if (!url) throw "No se encontró el geoserver '" + geoserver + "'";
         return this.geoServersColorScales[url].colorScales;
-    }
-
-    onMapClick(e) {
-        for (let l of this.getLayers()) {
-            console.time("search");
-            let found = l.mapClick(e);
-            console.timeEnd("search");
-        }
     }
 }
 window.g4 = new G4();

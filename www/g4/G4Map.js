@@ -10,6 +10,7 @@ class G4Map extends ZCustomController {
         this.map.on("zoomend", _ => this.callTriggerMapChange());
         this.map.on("moveend", _ => this.callTriggerMapChange());
         this.map.on("click", e => window.g4.trigger("map-click", e));
+        this.map.on("mousemove", e => window.g4.trigger("map-mouse-move", e));
     }
 
     selectBaseMap(name) {

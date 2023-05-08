@@ -197,7 +197,7 @@ L.GeoJsonOverlay = L.CanvasOverlay.extend({
     },
     setGeoJson:function(geoJson) {
         this.polygons = null;
-        this.lines = null;
+        this.lines = null, this.lineStrings = null;
         this.points = null;
         this.polygonLookup = null;
         this.geoJson = geoJson;
@@ -227,6 +227,7 @@ L.GeoJsonOverlay = L.CanvasOverlay.extend({
                 console.error("Geometry Type '" + feature.geometry.type + "' Not Handled");
             }
         }
+
         features = newFeatures;
         for (let feature of features) {
             let geom = feature.geometry;
@@ -261,7 +262,9 @@ L.GeoJsonOverlay = L.CanvasOverlay.extend({
                 polygonObject.triangles = triangles;
                 this.polygons.push(polygonObject);       
             } else if (geom.type == "LineString") {
-                if (!this.lines) this.lines = [];                
+                if (!this.lines) this.lines = [];          
+                if (!this.lineStrings) this.lineStrings = [];
+                this.lineStrings.push(feature);      
                 let lineObject = {feature, points:[]};
                 let coordinates = geom.coordinates;
                 if (this.options.smoothLines) {
@@ -438,6 +441,28 @@ L.GeoJsonOverlay = L.CanvasOverlay.extend({
     findPolygon:function(lat, lng) {
         if (!this.polygonLookup) return null;
         return this.polygonLookup.search(lng, lat);
+    },
+    findLine: function(lat, lng) {
+        if (!this.lineStrings) return null;
+        let bounds = this._map.getBounds();
+        let lat0 = bounds.getSouthWest().lat, lat1 = bounds.getNorthEast().lat;
+        let lng0 = bounds.getSouthWest().lng, lng1 = bounds.getNorthEast().lng;
+        let p0 = turf.point([lng0, lat0]);
+        let p1 = turf.point([lng1, lat1]);
+        let diagonal = turf.distance(p0, p1);
+        let treshold = 5 * diagonal / this._canvas.width;
+
+        let point = turf.point([lng, lat]);
+        let minDistance = null, minLine = null;
+        for (let ls of this.lineStrings) {
+            //console.log("ls", ls);
+            let distance = turf.pointToLineDistance(point, ls.geometry.coordinates);
+            if (distance < treshold && (!minLine || distance < minDistance)) {
+                minLine = ls;
+                minDistance = distance;
+            }
+        }
+       return minLine;
     }
 })
 

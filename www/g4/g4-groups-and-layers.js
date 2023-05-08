@@ -79,17 +79,16 @@ class G4Layer {
     async g4destroy() {}
 
     getStatus() {return this._status};
-    async setStatus(s, error=null) {
+    setStatus(s, error=null) {
         this._status = s;
         this.error = error;
-
-        await window.g4.trigger("layer-status-change", this);
+        window.g4.trigger("layer-status-change", this);
     }
 
     _incWorking() {
         if (++this.nWorking == 1) {
             this.error = null;
-            this.setStatus("working");
+            setTimeout(_ => this.setStatus("working"), 0);
         }
     }
     _decWorking(newStatus = "data", error = null) {
