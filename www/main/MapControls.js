@@ -119,22 +119,22 @@ class MapControls extends ZCustomController {
         let panels = [{panel:"./config-panels/PropCapa", panelOptions:{layer}, title:"Propiedades", opened: true}]
         if (layer.type == "raster") {
             if (layer.config.shader) {
-                panels.push({panel:"./config-panels/RasterShader", panelOptions:{layer}, title:"Visualizador: Shader", opened: false})
+                panels.push({panel:"./config-panels/RasterShader", panelOptions:{layer}, title:"Visualizador: Shader", opened: layer.config.shader.active})
             }
             if (layer.config.isolines) {
-                panels.push({panel:"./config-panels/RasterIsolineas", panelOptions:{layer}, title:"Visualizador: Isolineas", opened: false})
+                panels.push({panel:"./config-panels/RasterIsolineas", panelOptions:{layer}, title:"Visualizador: Isolineas", opened: layer.config.isolines.active})
             }
             if (layer.config.isobands) {
-                panels.push({panel:"./config-panels/RasterIsobandas", panelOptions:{layer}, title:"Visualizador: Isobandas", opened: false})
+                panels.push({panel:"./config-panels/RasterIsobandas", panelOptions:{layer}, title:"Visualizador: Isobandas", opened: layer.config.isobands.active})
             }
             if (layer.config.particles) {
-                panels.push({panel:"./config-panels/RasterParticulas", panelOptions:{layer}, title:"Visualizador: Partículas", opened: false})
+                panels.push({panel:"./config-panels/RasterParticulas", panelOptions:{layer}, title:"Visualizador: Partículas", opened: layer.config.particles.active})
             }
             if (layer.config.vectors) {
-                panels.push({panel:"./config-panels/RasterVectores", panelOptions:{layer}, title:"Visualizador: Vectores", opened: false})
+                panels.push({panel:"./config-panels/RasterVectores", panelOptions:{layer}, title:"Visualizador: Vectores", opened: layer.config.vectors.active})
             }
             if (layer.config.barbs) {
-                panels.push({panel:"./config-panels/RasterBarbas", panelOptions:{layer}, title:"Visualizador: Barbas", opened: false})
+                panels.push({panel:"./config-panels/RasterBarbas", panelOptions:{layer}, title:"Visualizador: Barbas", opened: layer.config.barbs.active})
             }
         } else if (layer.type == "geojson") {
             panels.push({panel:"./config-panels/GeoJsonColors", panelOptions:{layer}, title:"Color Elementos", opened: true})

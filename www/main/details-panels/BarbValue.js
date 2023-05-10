@@ -29,6 +29,7 @@ class BarbValue extends ZCustomController {
         ctx.stroke();
 
         let m = magnitude;
+        m = 5 * Math.round(m/5);
         // Calcular segmentos
         let segments = [], rest = m;
         while (rest >= 5) {

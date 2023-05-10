@@ -1,7 +1,6 @@
 class VectorValue extends ZCustomController {
     onThis_init(options) {
         let e = options.element;
-        console.log("e", e);
         this.lblMagnitude.text = e.formattedMagnitude;
         if (e.unit) this.lblUnit.text = "[" + e.unit + "]";
         this.drawVector(e.value);

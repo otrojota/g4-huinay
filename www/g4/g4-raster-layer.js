@@ -346,7 +346,7 @@ class G4RasterLayer extends G4Layer {
                 let opts = {
                     zIndex:(this.getOrder() >= 0)?206 + 10 *this.getOrder():-1,
                     opacity: this.getOpacity(),
-                    pixelsRatio: 1 // forzar a 1 para ver lineas más gruesas (Limitación de WebGL de ancho = 1)                     
+                    //pixelsRatio: 1 // forzar a 1 para ver lineas más gruesas (Limitación de WebGL de ancho = 1)                     
                 }                    
                 if (this.config.barbs.color) opts.color = this.config.barbs.color;
                 if (this.config.barbs.transformMagnitude) {
@@ -443,6 +443,7 @@ class G4RasterLayer extends G4Layer {
 
     drawIsolinesLabels(canvas, map) {
         if (!this.isolinesGeoJson) return;
+        if (this.config.isolines.showLabels == false) return;
         let canvasLayer = this.isolinesMarkersLayer;
         canvasLayer.setFont(10, "Arial");       
         canvasLayer.clear(); 
@@ -527,14 +528,15 @@ class G4RasterLayer extends G4Layer {
                     let formattedMagnitude = "" + label;
                     if (unit) label += " [" + unit + "]";
                     elements.push({type:"barb", value:v, label, layer: this, magnitude:m, formattedMagnitude, unit, lat, lng})
-                } else if (this.config.vector && this.config.vector.active || this.config.particles && this.config.particles.active) {
-                    let v = window.g4.interpolateVector(lat, lng, this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.ncols, this.vectorsGrid.nrows);
-                    if (v !== null && !isNaN(v.u) && !isNaN(v.v)) {
-                        let label = this.roundValue(Math.sqrt(v.u * v.u + v.v * v.v));
-                        let formattedMagnitude = "" + label;
-                        if (this.unit) label += " [" + this.unit + "]";
-                        elements.push({type:"vector", value:v, label, layer: this, formattedMagnitude, unit:this.unit})
-                    }
+                }
+            }
+            if ((this.config.vectors && this.config.vectors.active) || (this.config.particles && this.config.particles.active)) {
+                let v = window.g4.interpolateVector(lat, lng, this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.ncols, this.vectorsGrid.nrows);
+                if (v !== null && !isNaN(v.u) && !isNaN(v.v)) {
+                    let label = this.roundValue(Math.sqrt(v.u * v.u + v.v * v.v));
+                    let formattedMagnitude = "" + label;
+                    if (this.unit) label += " [" + this.unit + "]";
+                    elements.push({type:"vector", value:v, label, layer: this, formattedMagnitude, unit:this.unit})
                 }
             }
         }        
@@ -639,6 +641,22 @@ class G4RasterLayer extends G4Layer {
     set isolinesSmooth(s) {
         if (!this.config.isolines) throw "Isolines no soportado en capa";
         this.config.isolines.smoothLines = s;
+        if (this.isolinesLayer) {
+            this.isolinesLayer.remove();
+            this.isolinesLayer = null;
+            this.isolinesMarkersLayer.remove();
+            this.isolinesMarkersLayer = null;
+        }
+        this.callRedraw();
+    }
+    get isolinesShowLabels() {
+        if (!this.config.isolines) return false;
+        if (this.config.isolines.showLabels == false) return false;
+        return true;
+    }
+    set isolinesShowLabels(s) {
+        if (!this.config.isolines) throw "Isolines no soportado en capa";
+        this.config.isolines.showLabels = s;
         if (this.isolinesLayer) {
             this.isolinesLayer.remove();
             this.isolinesLayer = null;

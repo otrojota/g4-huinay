@@ -3,6 +3,7 @@ class RasterIsolineas extends ZCustomController {
         this.layer = options.layer;
         this.edIsolineasActivas.checked = this.layer.isolinesActive;
         this.edSuavizar.checked = this.layer.isolinesSmooth;
+        this.edEtiquetas.checked = this.layer.isolinesShowLabels;
         let color = this.layer.isolinesColor;
         while (color.length < 4) color.push(255);
         this.edColorLineas.value = this.rgbArrayToHex(color);
@@ -98,6 +99,9 @@ class RasterIsolineas extends ZCustomController {
     }
     onEdSuavizar_change() {
         this.layer.isolinesSmooth = this.edSuavizar.checked;
+    }
+    onEdEtiquetas_change() {
+        this.layer.isolinesShowLabels = this.edEtiquetas.checked;
     }
 }
 ZVC.export(RasterIsolineas);

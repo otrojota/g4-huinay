@@ -272,7 +272,7 @@ L.CanvasOverlay = L.Layer.extend({
         let scaleHeight = 80, margin = 10, innerMargin = 8;
         let x0 = margin, x1 = this._canvas.width - margin;
         if (maxX && x1 > maxX) x1 = maxX - margin;
-        if (x1 - x0 < 100) return;
+        if (x1 - x0 < 160) return;
         let y0 = this._canvas.height - (scaleHeight + margin) * (idx + 1), y1 = y0 + scaleHeight;
         let ctx = this.getContext2D();
         ctx.strokeStyle = "rgba(0,0,0,1)";
