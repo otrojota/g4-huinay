@@ -3,6 +3,7 @@ L.CanvasOverlay = L.Layer.extend({
         drawCallback: null,
         zIndex:null,
         opacity: 1,
+        clearCanvasOnMove: false,
         contextType: "2d" //webgl, 2d
     },
   
@@ -82,7 +83,11 @@ L.CanvasOverlay = L.Layer.extend({
     onMoveEnd: function() {
         this._reset.call(this);
     },
-    onMoveStart: function() {},
+    onMoveStart: function() {
+        if (this.options.clearCanvasOnMove) {
+            this.getContext2D().clearRect(0, 0, this._canvas.width, this._canvas.height);
+        }
+    },
   
     onResize: function(e) {
         this._canvas.width = e.newSize.x * this.ratio;
@@ -162,6 +167,179 @@ L.CanvasOverlay = L.Layer.extend({
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle'; 
         ctx.fillText(text, center.x, center.y);
+    },
+    drawRoundedRectLabelXY(x, y, text, borderColor, fillColor, textColor, borderRadius, textAlign, baseLine) {
+        let ctx = this.getContext2D();
+        let center = {x, y}
+        let textSize = ctx.measureText(text);
+        let textHeight = textSize.actualBoundingBoxAscent + textSize.actualBoundingBoxDescent;
+        let x0 = center.x - textSize.width / 2 - borderRadius;
+        let width = textSize.width + 2*borderRadius;
+        if (textAlign == "left") x0 += width / 2;
+        else if (textAlign == "right") x0 -= width / 2;
+        let y0 = center.y - textHeight / 2 - borderRadius;
+        let height = textHeight + 2*borderRadius;
+        if (baseLine == "top") y0 += height / 2;
+        else if (baseLine == "bottom") y0 -= height / 2;
+        ctx.strokeStyle = borderColor;
+        ctx.fillStyle = fillColor;
+        ctx.beginPath();
+        ctx.roundRect(x0, y0, width, height, borderRadius);
+        ctx.stroke();
+        ctx.fill();
+        ctx.fillStyle = textColor;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle"; 
+        ctx.fillText(text, x0 + width / 2, y0 + height / 2);
+    },
+    drawRoundedRectMultiLabelPointing(lat, lng, text, borderColor, fillColor, textColor, borderRadius, shadow=true) {        
+        let margin = 10;
+        let ctx = this.getContext2D();
+        let center = this.latLngToCanvas(lat, lng);
+        let lines = text.split("\n");
+        let maxWidth = 0, maxHeight = 0;
+        for (let line of lines) {
+            let textSize = ctx.measureText(line);    
+            if (!maxWidth || textSize.width > maxWidth) maxWidth = textSize.width;
+            let h = textSize.actualBoundingBoxAscent + textSize.actualBoundingBoxDescent;
+            if (!maxHeight || h > maxHeight) maxHeight = h;
+        }
+        maxHeight *= 1.7;
+        let x0 = center.x + 50;
+        let width = maxWidth + 2*borderRadius + 2*margin;
+        let y0 = center.y - 50 - maxHeight * lines.length;
+        let height = maxHeight * lines.length + 2*borderRadius + 2*margin;
+        // Sombra  
+        if (shadow) {      
+            ctx.strokeStyle = "rgba(0,0,0,0.2)";
+            ctx.fillStyle = "rgba(0,0,0,0.2)"
+            ctx.beginPath();
+            ctx.roundRect(x0 + 10, y0 + 10, width, height, borderRadius);
+            ctx.stroke();
+            ctx.fill();        
+        }
+        // Rectangulo
+        ctx.strokeStyle = borderColor;
+        ctx.fillStyle = fillColor;
+        ctx.beginPath();
+        ctx.roundRect(x0, y0, width, height, borderRadius);
+        ctx.stroke();
+        ctx.fill();
+        // Texto
+        ctx.fillStyle = textColor;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top'; 
+        let x = x0 + borderRadius + margin, y = y0 + borderRadius + margin;
+        for (let line of lines) {
+            ctx.fillText(line, x, y);
+            y += (maxHeight);
+        }
+        // Punto y Linea
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(center.x, center.y);
+        ctx.lineTo(center.x + 30, y0 + height / 2);
+        ctx.lineTo(x0, y0 + height / 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = borderColor;
+        ctx.fillStyle = fillColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, 5, 0, 2*Math.PI);
+        ctx.fill();
+        ctx.stroke();
+    },    
+    drawMarkerCircle(lat, lng, borderColor, fillColor) {        
+        let outerRadius = 15;
+        let ctx = this.getContext2D();
+        let center = this.latLngToCanvas(lat, lng);
+        ctx.fillStyle = fillColor;
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, outerRadius, 0, 2*Math.PI);
+        ctx.fill();
+        ctx.stroke();
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, outerRadius / 3, 0, 2*Math.PI);
+        ctx.fill();
+        ctx.stroke();
+    },
+    drawScale(idx, scale, valueObjectAtPoint, valuePropertiesPoint, maxX) {
+        let scaleHeight = 80, margin = 10, innerMargin = 8;
+        let x0 = margin, x1 = this._canvas.width - margin;
+        if (maxX && x1 > maxX) x1 = maxX - margin;
+        if (x1 - x0 < 100) return;
+        let y0 = this._canvas.height - (scaleHeight + margin) * (idx + 1), y1 = y0 + scaleHeight;
+        let ctx = this.getContext2D();
+        ctx.strokeStyle = "rgba(0,0,0,1)";
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(x0, y0, (x1 - x0), (y1 - y0), 10);
+        ctx.stroke();
+        ctx.fill();
+        // rangos
+        let ranges = scale.scale.getPreviewRanges();
+        let sMin = scale.scale.min, sMax = scale.scale.max;
+        let valueToX = v => (margin + innerMargin + ((x1 - x0) - 2 * innerMargin) * ((v - sMin) / (sMax - sMin)));
+        ctx.lineWidth = 0;
+        let ry0 = y0 + innerMargin, ry1 = ry0 + scaleHeight - 2 * innerMargin;
+        let grd = ctx.createLinearGradient(valueToX(scale.scale.min), ry0, valueToX(scale.scale.max), ry1);
+        for (let i=0; i<ranges.length; i++) {
+            let r = ranges[i];
+            if (i == 0) {
+                grd.addColorStop(0, `rgba(${r.colorFrom[0]}, ${r.colorFrom[1]}, ${r.colorFrom[2]}, ${r.colorFrom[3]/255})`);
+            }
+            let offset = (r.to - scale.scale.min) / (scale.scale.max - scale.scale.min);
+            if (offset > 1) offset = 1;
+            grd.addColorStop(offset, `rgba(${r.colorTo[0]}, ${r.colorTo[1]}, ${r.colorTo[2]}, ${r.colorTo[3]/255})`)
+        }
+        ctx.fillStyle = grd;
+        ctx.beginPath();
+        ctx.rect(margin + innerMargin, ry0, (x1 - x0) - 2 * innerMargin, ry1 - ry0);
+        ctx.fill();
+        // Min / Max
+        let unit = scale.layer.unit;
+        this.setFont(10, "Arial");
+        let stMin = scale.layer.roundValue(scale.scale.min);
+        if (unit) stMin += " [" + unit + "]";
+        this.drawRoundedRectLabelXY(x0 + 2*innerMargin, y0 + 2*innerMargin, stMin, "rgba(255,255,255,1)", "rgba(0,0,0,1)", "rgba(255,255,255,1)", 10, "left", "top");
+        let stMax = scale.layer.roundValue(scale.scale.max);
+        if (unit) stMax += " [" + unit + "]";
+        this.drawRoundedRectLabelXY(x1 - 2*innerMargin, y0 + 2*innerMargin, stMax, "rgba(255,255,255,1)", "rgba(0,0,0,1)", "rgba(255,255,255,1)", 10, "right", "top");
+        this.setFont(12, "Arial");
+        this.drawRoundedRectLabelXY((x0 + x1) / 2, ry0 + 4*innerMargin, scale.name, "rgba(0,0,0,1)", "rgba(120,120,255,0.6)", "rgba(0,0,0,1)", 10, "center", "middle");
+        // Value
+        if (valuePropertiesPoint) {
+            let x = valueToX(valuePropertiesPoint.value);
+            let y = ry0 + (ry1 - ry0) / 2;
+            ctx.fillStyle = "rgba(0,0,0,1)";
+            ctx.strokeStyle = "rgba(255,255,255,1)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, 15, 0, 2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+        }
+        if (valueObjectAtPoint) {
+            let x = valueToX(valueObjectAtPoint.value);
+            ctx.fillStyle = "rgba(0,0,0,0.7)";
+            ctx.strokeStyle = "rgba(255,255,255,1)";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.rect(x - 3, ry0 + 1, 7, (ry1 - ry0) - 5);
+            ctx.fill();
+            ctx.stroke();
+        }
     }
 });
   

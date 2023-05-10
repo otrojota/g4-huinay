@@ -258,6 +258,7 @@ class G4RasterLayer extends G4Layer {
             if (!this.shaderColorScale) {
                 if (!this.config.shader.colorScale) throw "No hay 'colorScale' para la capa-shader";
                 this.shaderColorScale = window.g4.createColorScale(this.config.geoserver, this.config.shader.colorScale.name, this.config.shader.colorScale);
+                window.g4.trigger("color-scale-changed", this);
             }
             if (!this.grid) await this.getFileGrid();
             this.shaderColorScale.setRange(this.grid.min, this.grid.max);
@@ -380,6 +381,7 @@ class G4RasterLayer extends G4Layer {
             if (!this.isobandsColorScale) {
                 if (!this.config.isobands.colorScale) throw "No hay 'colorScale' para la capa-isobandas";
                 this.isobandsColorScale = window.g4.createColorScale(this.config.geoserver, this.config.isobands.colorScale.name, this.config.isobands.colorScale);
+                window.g4.trigger("color-scale-changed", this);
             }
             this.isobandsColorScale.setRange(this.isobandsGeoJson.min, this.isobandsGeoJson.max);
             if (!this.isobandsLayer) {
@@ -488,6 +490,57 @@ class G4RasterLayer extends G4Layer {
         if (this.barbsCurrentController) this.barbsCurrentController.abort();
     }
 
+    // Previsualizacion
+    get activeColorScales() {
+        let scales = [];
+        if (this.config.shader && this.config.shader.active && this.shaderColorScale && !isNaN(this.shaderColorScale.min) && !isNaN(this.shaderColorScale.max)) {
+            scales.push({id:this.id + ":shader", name:this.name + ": Shader", scale: this.shaderColorScale, layer:this});
+        }
+        if (this.config.isobands && this.config.isobands.active && this.isobandsColorScale && !isNaN(this.isobandsColorScale.min) && !isNaN(this.isobandsColorScale.max)) {
+            scales.push({id:this.id + ":isobands", name:this.name + ": Isobands", scale: this.isobandsColorScale, layer:this});
+        }
+        return scales;
+    } 
+
+    elementAtPoint(lat, lng) {
+        let elements = [];
+        if (this.config.shader && this.config.shader.active && this.grid) {
+            let v = window.g4.interpolate(lat, lng, this.grid.foundBox, this.grid.rows, this.grid.ncols, this.grid.nrows);
+            if (v !== null && !isNaN(v)) {
+                let label = this.roundValue(v);
+                if (this.unit) label += " [" + this.unit + "]";
+                elements.push({type:"value", value:v, scaleId:this.id + ":shader", label, layer: this})
+            }
+        }
+        if (this.vectorsGrid) {
+            if (this.config.barbs && this.config.barbs.active) {
+                let v = window.g4.interpolateVector(lat, lng, this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.ncols, this.vectorsGrid.nrows);
+                if (v !== null && !isNaN(v.u) && !isNaN(v.v)) {
+                    let m = Math.sqrt(v.u * v.u + v.v * v.v);
+                    let unit = this.unit;
+                    if (this.config.barbs.transformMagnitude) {
+                        let f = eval("(" + this.config.barbs.transformMagnitude + ")");
+                        m = f(m);
+                        if (this.config.barbs.transformUnit) unit = this.config.barbs.transformUnit;
+                    }
+                    let label = this.roundValue(m);
+                    let formattedMagnitude = "" + label;
+                    if (unit) label += " [" + unit + "]";
+                    elements.push({type:"barb", value:v, label, layer: this, magnitude:m, formattedMagnitude, unit, lat, lng})
+                } else if (this.config.vector && this.config.vector.active || this.config.particles && this.config.particles.active) {
+                    let v = window.g4.interpolateVector(lat, lng, this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.ncols, this.vectorsGrid.nrows);
+                    if (v !== null && !isNaN(v.u) && !isNaN(v.v)) {
+                        let label = this.roundValue(Math.sqrt(v.u * v.u + v.v * v.v));
+                        let formattedMagnitude = "" + label;
+                        if (this.unit) label += " [" + this.unit + "]";
+                        elements.push({type:"vector", value:v, label, layer: this, formattedMagnitude, unit:this.unit})
+                    }
+                }
+            }
+        }        
+        return elements;
+    }
+
     // Útiles
     get unit() {
         return (this.variable && this.variable)?this.variable.unit:null;
@@ -509,6 +562,7 @@ class G4RasterLayer extends G4Layer {
         if (!this.config.shader) throw "Shader no soportado en capa";
         this.config.shader.active = a;
         this.callRedraw();
+        window.g4.trigger("color-scale-changed", this);
     }
     get shaderColorScaleDef() {return this.config.shader?this.config.shader.colorScale:null}
     set shaderColorScaleDef(scaleDef) {
@@ -516,6 +570,7 @@ class G4RasterLayer extends G4Layer {
         this.config.shader.colorScale.name = scaleDef.name;
         this.shaderColorScale = null;
         this.callRedraw();
+        window.g4.trigger("color-scale-changed", this);
     }
     get shaderColorScaleAuto() {return this.config.shader?this.config.shader.colorScale.auto:false}
     set shaderColorScaleAuto(auto) {
@@ -523,6 +578,7 @@ class G4RasterLayer extends G4Layer {
         this.config.shader.colorScale.auto = auto;
         this.shaderColorScale = null;
         this.callRedraw();
+        window.g4.trigger("color-scale-changed", this);
     }
     get shaderColorScaleMin() {return this.config.shader?this.config.shader.colorScale.min:0}
     set shaderColorScaleMin(min) {
@@ -530,6 +586,7 @@ class G4RasterLayer extends G4Layer {
         this.config.shader.colorScale.min = min;
         this.shaderColorScale = null;
         this.callRedraw();
+        window.g4.trigger("color-scale-changed", this);
     }
     get shaderColorScaleMax() {return this.config.shader?this.config.shader.colorScale.max:0}
     set shaderColorScaleMax(max) {
@@ -537,6 +594,7 @@ class G4RasterLayer extends G4Layer {
         this.config.shader.colorScale.max = max;
         this.shaderColorScale = null;
         this.callRedraw();
+        window.g4.trigger("color-scale-changed", this);
     }
     get shaderColorScaleClipOutOfRange() {return this.config.shader?this.config.shader.clipOutOfRange:false}
     set shaderColorScaleClipOutOfRange(clip) {
@@ -544,6 +602,7 @@ class G4RasterLayer extends G4Layer {
         this.config.shader.colorScale.clipOutOfRange = clip;
         this.shaderColorScale = null;
         this.callRedraw();
+        window.g4.trigger("color-scale-changed", this);
     }
     get shaderInterpolate() {return this.config.shader?this.config.shader.interpolate:false}
     get shaderInterpolateMinCols() {return (this.config.shader && this.config.shader.interpolate)?this.config.shader.interpolate.minCols:300}
@@ -612,6 +671,7 @@ class G4RasterLayer extends G4Layer {
         if (!this.config.isobands) throw "Isobands no soportado en capa";
         this.config.isobands.active = a;
         this.callRedraw();
+        window.g4.trigger("color-scale-changed", this);
     }
     get isobandsIncrement() {return this.config.isobands?this.config.isobands.increment:null}
     set isobandsIncrement(i) {
@@ -628,6 +688,7 @@ class G4RasterLayer extends G4Layer {
         this.config.isobands.colorScale.name = scaleDef.name;
         this.isobandsColorScale = null;
         this.callRedraw();
+        window.g4.trigger("color-scale-changed", this);
     }
     get isobandsColorScaleAuto() {return this.config.isobands?this.config.isobands.colorScale.auto:false}
     set isobandsColorScaleAuto(auto) {
@@ -635,6 +696,7 @@ class G4RasterLayer extends G4Layer {
         this.config.isobands.colorScale.auto = auto;
         this.isobandsColorScale = null;
         this.callRedraw();
+        window.g4.trigger("color-scale-changed", this);
     }
     get isobandsColorScaleMin() {return this.config.isobands?this.config.isobands.colorScale.min:0}
     set isobandsColorScaleMin(min) {
@@ -642,6 +704,7 @@ class G4RasterLayer extends G4Layer {
         this.config.isobands.colorScale.min = min;
         this.isobandsColorScale = null;
         this.callRedraw();
+        window.g4.trigger("color-scale-changed", this);
     }
     get isobandsColorScaleMax() {return this.config.isobands?this.config.isobands.colorScale.max:0}
     set isobandsColorScaleMax(max) {
@@ -649,6 +712,7 @@ class G4RasterLayer extends G4Layer {
         this.config.isobands.colorScale.max = max;
         this.isobandsColorScale = null;
         this.callRedraw();
+        window.g4.trigger("color-scale-changed", this);
     }
     get isobandsColorScaleClipOutOfRange() {return this.config.isobands?this.config.isobands.clipOutOfRange:false}
     set isobandsColorScaleClipOutOfRange(clip) {
@@ -656,6 +720,7 @@ class G4RasterLayer extends G4Layer {
         this.config.isobands.colorScale.clipOutOfRange = clip;
         this.isobandsColorScale = null;
         this.callRedraw();
+        window.g4.trigger("color-scale-changed", this);
     }
 
     // Particles

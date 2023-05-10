@@ -138,27 +138,7 @@ L.BarbsOverlay = L.CanvasOverlay.extend({
         if (this.polygonProgram) gl.deleteProgram(this.polygonProgram);
     },
     _getInperpolatedVector(lat, lng) {
-        // https://en.wikipedia.org/wiki/Bilinear_interpolation
-        // espacio (0,1)        
-        let b = this.box, rowsU = this.rowsU, rowsV = this.rowsV;
-        if (lat <= b.lat0 || lat >= b.lat1 || lng <= b.lng0 || lng >= b.lng1) return null;
-        let i = parseInt((lng - b.lng0) / b.dLng);
-        let j = parseInt((lat - b.lat0) / b.dLat);
-        if (i >= (this.nCols - 1) || j >= (this.nRows - 1)) return;
-        let x0 = b.lng0 + b.dLng*i;
-        let x = (lng - x0) / b.dLng;
-        let y0 = b.lat0 + b.dLat*j;
-        let y = (lat - y0) / b.dLat;
-        let rx = 1 - x, ry = 1 - y;
-
-        let u00 = rowsU[j][i], u10 = rowsU[j][i+1], u01 = rowsU[j+1][i], u11 = rowsU[j+1][i+1];
-        if (u00 == null || u10 == null || u01 == null || u11 == null) return null;
-        let u = u00*rx*ry + u10*x*ry + u01*rx*y + u11*x*y;
-
-        let v00 = rowsV[j][i], v10 = rowsV[j][i+1], v01 = rowsV[j+1][i], v11 = rowsV[j+1][i+1];
-        if (v00 == null || v10 == null || v01 == null || v11 == null) return null;
-        let v = v00*rx*ry + v10*x*ry + v01*rx*y + v11*x*y;
-        return {u, v};
+        return window.g4.interpolateVector(lat, lng, this.box, this.rowsU, this.rowsV, this.nCols, this.nRows);
     },
     setVectorsGridData:function(box, rowsU, rowsV, nrows, ncols) {
         this.box = box;
@@ -287,7 +267,7 @@ L.BarbsOverlay = L.CanvasOverlay.extend({
                     let lSum = b0.x, barDirection = Math.sign(lat);
                     segments.forEach((s, idx) => {
                         if (s.type == "50") {
-                            if (idx > 0) lSum += step * 2;
+                            if (idx > 0) lSum += step;
                             let s0 = {x:lSum, y:b0.y};
                             let s1 = {x:lSum - step, y:b0.y - 2*step*barDirection};
                             let s2 = {x:lSum - step, y:b0.y};

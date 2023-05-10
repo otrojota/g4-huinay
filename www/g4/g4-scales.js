@@ -66,6 +66,20 @@ class G4ColorScale {
     }
     getColor(value) {return "rgb(255,0,0)"}
     refreshPreview(div) {div.style.background = "rgb(255,0,0)"}
+    getPreviewRanges() {
+        let ranges = [], steps = 200;
+        if (isNaN(this.min) || isNaN(this.max) || this.min == this.max) return ranges;        
+        let delta = (this.max - this.min) / steps;        
+        for (let i=0; i<steps; i++) {
+            let v0 = this.min + delta * i, v1 = this.min + delta * (i + 1);
+            let colorFrom = this.getColorObject(v0);
+            while(colorFrom.length < 4) colorFrom.push(255);
+            let colorTo = this.getColorObject(v1);
+            while(colorTo.length < 4) colorTo.push(255);
+            ranges.push({from:v0, to:v1, colorFrom, colorTo});
+        }
+        return ranges;
+    }
     getColorObject(value) {
         let c = this.getColor(value);
         c = c.toLowerCase();

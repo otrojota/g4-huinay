@@ -169,5 +169,6 @@ class G4Layer {
     setOpacity(o) {
         console.error("setOpacity no sobreescrito en capa", this); 
     }
-    mapClick(e) {}
+    elementAtPoint(lat, lng) {}
+    get activeColorScales() {return []}
 }

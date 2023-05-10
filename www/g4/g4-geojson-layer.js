@@ -160,19 +160,19 @@ class G4GeoJsonLayer extends G4Layer {
     cancel() {
         if (this.currentController) this.currentController.abort();
     }
-    mapClick(e) {
+    elementAtPoint(lat, lng) {
         let polygon = null, line = null;
         if (this.geoJsonLayer) {
-            line = this.geoJsonLayer.findLine(e.latlng.lat, e.latlng.lng);            
+            line = this.geoJsonLayer.findLine(lat, lng);            
             if (line) {
                 return {layer:this, type:"feature", subtype:"line", feature:line}
             }
-            polygon = this.geoJsonLayer.findPolygon(e.latlng.lat, e.latlng.lng);            
+            polygon = this.geoJsonLayer.findPolygon(lat, lng);            
             if (polygon) {
                 return {layer:this, type:"feature", subtype:"polygon", feature:polygon}
             }
         }        
-        // TODO: Buscar lineas y puntos
+        // TODO: Buscar Puntos
         
         return null;
     }

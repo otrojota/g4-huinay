@@ -31,13 +31,27 @@ class Main extends ZCustomController {
         this.rightPanel.view.addEventListener("shown.bs.offcanvas", _ => window.g4.trigger("right-panel-opened"));
         this.rightPanel.view.addEventListener("hidden.bs.offcanvas", _ => window.g4.trigger("right-panel-closed"));
         this.rightPanelOpened = false;
-        window.g4.on("left-panel-opened", _ => this.rightPanelOpened = true)
-        window.g4.on("left-panel-closed", _ => this.rightPanelOpened = false)
+        window.g4.on("right-panel-opened", _ => {
+            this.rightPanelOpened = true
+            this.callRefreshScalesAndProperties();
+        })
+        window.g4.on("right-panel-closed", _ => {
+            window.g4.mapController.setPropertiesPoint();
+            this.lastClickedEvent = null;
+            this.rightPanelOpened = false;
+            this.callRefreshScalesAndProperties();
+        })
 
         window.g4.on("map-click", e => this.onMapClick(e));
         window.g4.on("map-mouse-move", e => this.onMapMouseMove(e));
 
         this.rightOffsetCanvas = new bootstrap.Offcanvas(this.rightPanel.view);
+
+        // Refrescado de Escalas
+        window.g4.on("layer-added", _ => this.callRefreshScalesAndProperties())
+        window.g4.on("layer-removed", _ => this.callRefreshScalesAndProperties())
+        window.g4.on("layer-status-change", _ => this.callRefreshScalesAndProperties())
+        window.g4.on("color-scale-changed", _ => this.callRefreshScalesAndProperties())
 
         // Map Controls Status
         this.controlsExpanded = true;
@@ -116,27 +130,96 @@ class Main extends ZCustomController {
     }
     onMapMouseMove(e) {
         this.showLatLng(e.latlng.lat, e.latlng.lng);
+        if (this.objectAtPointTimer) clearTimeout(this.objectAtPointTimer);
+        this.objectAtPointTimer = setTimeout(_ => {
+            this.objectAtPointTimer = null;
+            this.showObjectAtPoint(e.latlng.lat, e.latlng.lng);
+        }, 100);
     }
     async onMapClick(e) {
+        this.lastClickedEvent = e;
         let title = this.showLatLng(e.latlng.lat, e.latlng.lng);
         let found = [];
         for (let l of window.g4.getLayersFromTop()) {
-            let element = l.mapClick(e);
-            if (element) found.push(element); 
+            let element = l.elementAtPoint(e.latlng.lat, e.latlng.lng);
+            if (element) {
+                if (Array.isArray(element)) found.push(...element);
+                else found.push(element); 
+            }
         }
-        if (!found.length) {
-            this.closeRightPanel();
-            return;
-        }
-        let panels = [];
+        let panels = [], values = [];
         for (let element of found) {
             if (element.type == "feature") {
                 panels.push({panel:"./details-panels/FeatureProperties", panelOptions:{element}, title:element.layer.name, opened: true})
+            } else if (element.type == "value") {
+                values.push(element);
+                panels.push({panel:"./details-panels/ScaleValue", panelOptions:{element}, title:element.layer.name, opened: true})
+            } else if (element.type == "vector") {
+                values.push(element);
+                panels.push({panel:"./details-panels/VectorValue", panelOptions:{element}, title:element.layer.name, opened: true})
+            } else if (element.type == "barb") {
+                values.push(element);
+                panels.push({panel:"./details-panels/BarbValue", panelOptions:{element}, title:element.layer.name, opened: true})
             }
         }
+        window.g4.mapController.setPropertiesPoint(e.latlng.lat, e.latlng.lng, values);
         await this.loadRightPanel("main/MultiPanelsLoader", {panels}, title);
     }
 
+    showObjectAtPoint(lat, lng) {
+        let found = [];
+        let geoJsonLayers = window.g4.getLayersFromTop();
+        for (let l of geoJsonLayers) {
+            let element = l.elementAtPoint(lat, lng);
+            if (element) {
+                if (Array.isArray(element)) found.push(...element);
+                else found.push(element); 
+            }
+        }
+        if (!found.length) {
+            window.g4.mapController.setObjectAtPoint();
+            return;
+        }
+        let st = "", values = [];        
+        for (let e of found) {
+            if (e.type == "feature") {
+                if (st.length) st += "\n";
+                st += e.layer.name;
+                if (e.feature.properties && e.feature.properties.name) {                    
+                    st += ":\n  => " + e.feature.properties.name;
+                } else if (e.feature.geometry && e.feature.geometry.properties && e.feature.geometry.properties.name) {
+                    st += ":\n  => " + e.feature.geometry.properties.name;
+                }        
+            } else if (e.type == "value") {
+                values.push(e);
+                if (st.length) st += "\n";
+                st += e.layer.name;
+                st += ":\n  => " + e.label;
+            } else if (e.type == "vector" || e.type == "barb") {
+                values.push(e);
+                if (st.length) st += "\n";
+                st += e.layer.name;
+                st += ":\n  => " + e.label;
+            }
+        }
+        window.g4.mapController.setObjectAtPoint(lat, lng, st, values);
+    }
 
+    callRefreshScalesAndProperties() {
+        if (this.refreshScalesTimer) clearTimeout(this.refreshScalesTimer);
+        this.refreshScalesTimer = setTimeout(_ => {
+            this.refreshScalesTimer = null;
+            this.refreshScales();
+            if (this.lastClickedEvent) this.onMapClick(this.lastClickedEvent);
+        }, 50);
+    }
+    refreshScales() {
+        let layers = window.g4.getLayers();
+        let scales = layers.reduce((list, layer) => {
+            list.push(...(layer.activeColorScales || []));
+            return list;
+        }, []);
+        window.g4.mapController.setActiveScales(scales);
+    }
 }
 ZVC.export(Main);

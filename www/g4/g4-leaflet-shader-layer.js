@@ -102,29 +102,7 @@ L.ShaderOverlay = L.CanvasOverlay.extend({
         L.CanvasOverlay.prototype.redraw.call(this, map);   
     },
     interpolate(lat, lng, box, rows, nCols, nRows) {
-        // https://en.wikipedia.org/wiki/Bilinear_interpolation                    
-        if (lat < box.lat0 || lat > box.lat1 || lng < box.lng0 || lng > box.lng1) return null;
-        let i = parseInt((lng - box.lng0) / box.dLng);
-        let j = parseInt((lat - box.lat0) / box.dLat);
-        if (i >= (nCols - 1) || j >= (nRows - 1)) return null;
-        let x0 = box.lng0 + box.dLng*i;
-        let x = (lng - x0) / box.dLng;
-        let y0 = box.lat0 + box.dLat*j;
-        let y = (lat - y0) / box.dLat;
-        let rx = 1 - x, ry = 1 - y;
-
-        let z00 = rows[j][i], z10 = rows[j][i+1], z01 = rows[j+1][i], z11 = rows[j+1][i+1];
-        if (z00 == null || z10 == null || z01 == null || z11 == null) {
-            // Usar promedio simple
-            let sum=0, n=0;
-            if (z00 !== null) {sum += z00; n++;}
-            if (z10 !== null) {sum += z10; n++;}
-            if (z01 !== null) {sum += z01; n++;}
-            if (z11 !== null) {sum += z11; n++;}
-            if (n) return sum / n;
-            return null;
-        }
-        return z00*rx*ry + z10*x*ry + z01*rx*y + z11*x*y;
+        return window.g4.interpolate(lat, lng, box, rows, nCols, nRows);
     },
     buildTextureImage() {
         let box = this.box;

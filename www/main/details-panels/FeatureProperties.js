@@ -7,6 +7,11 @@ class FeatureProperties extends ZCustomController {
             names.splice(idx, 1);
             names.splice(0,0,"id")
         }
+        idx = names.indexOf("name");
+        if (idx >= 0) {
+            names.splice(idx, 1);
+            names.splice(1,0,"name")
+        }
         let html = names.reduce((html, name) => {
             html += `
             <li class="list-group-item d-flex justify-content-between align-items-start">

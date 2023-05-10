@@ -2,8 +2,10 @@ class G4Map extends ZCustomController {
     onThis_init() {}
 
     async g4init() {
-        this.map = L.map("mapContainer", {zoomControl: false});
+        this.map = L.map("mapContainer", {zoomControl: false, attributionControl: false});
         this.selectBaseMap(window.config.maps[0].name);
+        this.interactionsLayer = new L.G4InteractionsOverlay({});
+        this.interactionsLayer.addTo(this.map);
         let b = window.config.initialBounds;
         let bounds = [[b.s, b.w], [b.n, b.e]];
         this.map.fitBounds(bounds);
@@ -19,6 +21,7 @@ class G4Map extends ZCustomController {
         this.baseMapLayer = L.tileLayer(map.url, {attribution: map.attribution});
         this.baseMapLayer.addTo(this.map);
         this.selectedMap = name;
+        //L.control.attribution({position: 'topright'}).addTo(map);
     }
 
     zoomIn() {this.map.zoomIn()}
@@ -36,6 +39,19 @@ class G4Map extends ZCustomController {
             this.triggerMapChangeTimer = null;
             window.g4.trigger("map-change", this);            
         }, 100);
+    }
+
+    setObjectAtPoint(lat, lng, label, values) {
+        this.interactionsLayer.setObjectAtPoint(lat, lng, label, values);
+    }
+    setPropertiesPoint(lat, lng, values) {
+        this.interactionsLayer.setPropertiesPoint(lat, lng, values);
+    }
+    setActiveScales(scales) {
+        this.interactionsLayer.setActiveScales(scales);
+    }
+    getActiveScale(id) {
+        return (this.interactionsLayer.activeScales || []).find(s => (s.id == id));
     }
 }
 ZVC.export(G4Map);
