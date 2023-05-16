@@ -56,6 +56,9 @@ class Main extends ZCustomController {
         // Map Controls Status
         this.controlsExpanded = true;
 
+        // Preleer estaciones (asíncrono)
+        window.g4.leeCacheEstaciones();
+
         // Capas Iniciales
         for (let layerDefinition of G4Layer.getDefaultLayerDefinition()) {
             let layer = G4Layer.createFromDefinition(layerDefinition);
@@ -220,6 +223,6 @@ class Main extends ZCustomController {
             return list;
         }, []);
         window.g4.mapController.setActiveScales(scales);
-    }
+    }    
 }
 ZVC.export(Main);

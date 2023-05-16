@@ -8,7 +8,6 @@ class GeoJsonColors extends ZCustomController {
         this.edOpacidadPoligonos.view.addEventListener("input", e => this.onEdColorPoligonos_change())
         this.edOpacidadPoligonos.value = color[3];
         let b = this.layer.polygonsBorderProp;
-        console.log("b", b);
         if (!b) {
             this.edBordesPoligonos.checked = false;
             this.filaColorBordesPoligonos.hide();

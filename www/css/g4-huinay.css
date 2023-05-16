@@ -179,3 +179,29 @@
     border: 1px solid darkgray;
     transition: 0.5s all;
 }
+
+.collapsible-tree-group i {
+    transition: 0.3s ease-in-out;
+}
+.collapsible-tree-group i.expanded {
+    transform: rotate(90deg);
+}
+.collapsible-tree-content.expanded {
+    opacity: 1;
+    display: block;
+    height: auto;
+}
+.collapsible-tree-content {
+    opacity: 0;
+    display: none;
+    transition: 0.5s all;
+}
+
+.clickable-icon {
+    cursor: pointer;
+}
+
+.station-row {
+    display: flex;
+    text-align: start;
+}

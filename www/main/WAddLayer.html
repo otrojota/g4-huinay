@@ -6,21 +6,53 @@
                 <button id="cmdCloseDialog" type="button" class="btn-close"></button>
             </div>
             <div class="modal-body">
-                <div class="d-flex h-100">
-                    <div class="container">
-                        <div class="row">
-                            <div class="col">
-                                <div id="edSearch" data-z-component="common/TextSearch"></div>
-                            </div>
+                <div id="edSearch" data-z-component="common/TextSearch"></div>
+                <nav class="mt-2">
+                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#nav-variables" type="button" role="tab">Variables</button>
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#nav-vectoriales" type="button" role="tab">Vectoriales</button>
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#nav-estaciones" type="button" role="tab">Estaciones</button>
+                    </div>
+                    <div class="tab-content" id="nav-tabContent">
+                        <div id="nav-variables" class="tab-pane fade show active" role="tabpanel">
+                            <div id="layersContainer" class="border round" style="min-height: 100px; overflow-y: auto;"></div>
                         </div>
-                        <div class="row mt-2">
-                            <div class="col">
-                                <div id="layersContainer" class="border round" style="min-height: 100px; overflow-y: auto;">
+                        <div id="nav-vectoriales" class="tab-pane fade" role="tabpanel">
+                            <div id="geojsonContainer" class="border round" style="min-height: 100px; overflow-y: auto;"></div>
+                        </div>
+                        <div id="nav-estaciones" class="tab-pane fade" role="tabpanel">
+                            <div class="container mt-2">
+                                <div class="row">
+                                    <div class="col-4">
+                                        <label for="edTipoEstacion" class="mt-2">Tipo de las Estaciones</label>
+                                    </div>
+                                    <div class="col-8">
+                                        <select id="edTipoEstacion" class="form-select" data-z-id-field="code" data-z-label-field="name"></select>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col">
+                                        <div id="stationsContainer" class="border round" style="min-height: 100px; overflow-y: auto;"></div>
+                                    </div>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-3">
+                                        <label for="edCapaEstaciones" class="mt-2">Agregar a Capa</label>
+                                    </div>
+                                    <div class="col-6">
+                                        <select id="edCapaEstaciones" class="form-select" data-z-id-field="id" data-z-label-field="name"></select>
+                                    </div>
+                                    <div class="col-3 text-end">
+                                        <button id="cmdAgregarEstaciones" class="btn btn-primary">
+                                            Agregar
+                                            <span id="lblAgregarEstaciones" class="ms-2 badge bg-secondary">0</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </nav>
             </div>
         </div>
     </div>

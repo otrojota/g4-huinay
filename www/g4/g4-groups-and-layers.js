@@ -23,6 +23,9 @@ class G4Group {
             await window.g4.trigger("layer-removed", layer);
         }
     }
+    getLayer(id) {
+        return this.layers.find(l => l.id == id);
+    }
 
     getLayerOrder(layer) {
         let idx = this.layers.indexOf(layer);
@@ -35,6 +38,11 @@ class G4Group {
         this.layers.splice(idx, 0, layer);
         for (let layer of this.layers) layer.resetOrder();
         window.g4.trigger("layers-reodered");
+    }
+    async createStationsLayer() {
+        let layer = G4Layer.createFromDefinition({name:"Estaciones", type:"stations"});
+        await this.addLayer(layer);
+        return layer;
     }
 }
 
@@ -55,6 +63,7 @@ class G4Layer {
         switch (def.type) {
             case "geojson": return new G4GeoJsonLayer(def.name, defClone.config);
             case "raster": return new G4RasterLayer(def.name, defClone.config);
+            case "stations": return new G4StationsLayer(def.name, defClone.config);
             default: throw "Layer Type '" + def.type + "' not handled";
         }
     }    

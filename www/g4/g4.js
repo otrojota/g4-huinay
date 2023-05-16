@@ -202,5 +202,30 @@ class G4 {
         if (!url) throw "No se encontró el geoserver '" + geoserver + "'";
         return this.geoServersColorScales[url].colorScales;
     }
+
+    // Zreposervers
+    getZRepoClient(code) {
+        if (!this.zrepoclients) this.zrepoclients = {};
+        let c = this.zrepoclients[code];
+        if (c) return c;
+        let def = window.config.zreposervers?window.config.zreposervers[code]:null;
+        if (!def) throw "No se encontró el zreposerver " + code;
+        c = new ZRepoClient(def.url, def.token);
+        this.zrepoclients[code] = c;
+        return c;
+    }
+
+    // Estaciones
+    async leeCacheEstaciones() {
+        let layers = (window.config.layers || []).filter(l => l.type == "stations");
+        let stationLayers = [];
+        for (let l of layers) {
+            let layer = JSON.parse(JSON.stringify(l));
+            stationLayers.push(layer);
+            let zRepoClient = this.getZRepoClient(layer.config.zreposerver);
+            layer.stations = await zRepoClient.getValores(layer.config.dimension, null, layer.config.filter);            
+        }
+        this.stationLayers = stationLayers;
+    }
 }
 window.g4 = new G4();

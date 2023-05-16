@@ -516,7 +516,7 @@ class G4RasterLayer extends G4Layer {
         if (this.vectorsGrid) {
             if (this.config.barbs && this.config.barbs.active) {
                 let v = window.g4.interpolateVector(lat, lng, this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.ncols, this.vectorsGrid.nrows);
-                if (v !== null && !isNaN(v.u) && !isNaN(v.v)) {
+                if (v && !isNaN(v.u) && !isNaN(v.v)) {
                     let m = Math.sqrt(v.u * v.u + v.v * v.v);
                     let unit = this.unit;
                     if (this.config.barbs.transformMagnitude) {
@@ -532,7 +532,7 @@ class G4RasterLayer extends G4Layer {
             }
             if ((this.config.vectors && this.config.vectors.active) || (this.config.particles && this.config.particles.active)) {
                 let v = window.g4.interpolateVector(lat, lng, this.vectorsGrid.foundBox, this.vectorsGrid.rowsU, this.vectorsGrid.rowsV, this.vectorsGrid.ncols, this.vectorsGrid.nrows);
-                if (v !== null && !isNaN(v.u) && !isNaN(v.v)) {
+                if (v && !isNaN(v.u) && !isNaN(v.v)) {
                     let label = this.roundValue(Math.sqrt(v.u * v.u + v.v * v.v));
                     let formattedMagnitude = "" + label;
                     if (this.unit) label += " [" + this.unit + "]";

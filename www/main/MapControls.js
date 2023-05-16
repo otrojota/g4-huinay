@@ -85,11 +85,22 @@ class MapControls extends ZCustomController {
 
     onCmdAddLayer_click() {
         this.showDialog("./WAddLayer", {}, async layerDef => {
+            if (layerDef.stations) {
+                await this.addStations(layerDef);
+                return;
+            }
             let layer = G4Layer.createFromDefinition(layerDef);
             await window.g4.getActiveGroup().addLayer(layer);
             await layer.g4init();
             layer.refresh();
         })
+    }
+
+    async addStations(stationsLayerDef) {
+        let layer = stationsLayerDef.layer == "_new_"?
+            await window.g4.getActiveGroup().createStationsLayer()
+            :window.g4.getActiveGroup().getLayer(stationsLayerDef.layer);
+        await layer.addStations(stationsLayerDef.stations);
     }
 
     callRefreshLayers() {
@@ -138,6 +149,8 @@ class MapControls extends ZCustomController {
             }
         } else if (layer.type == "geojson") {
             panels.push({panel:"./config-panels/GeoJsonColors", panelOptions:{layer}, title:"Color Elementos", opened: true})
+        } else if (layer.type == "stations") {
+            panels.push({panel:"./config-panels/StationsColors", panelOptions:{layer}, title:"Color Estaciones", opened: true})
         }
         await window.g4.mainController.loadLeftPanel("main/MultiPanelsLoader", {panels}, layer.name);
     }
