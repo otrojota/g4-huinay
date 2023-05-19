@@ -442,6 +442,7 @@ class G4RasterLayer extends G4Layer {
     }
 
     drawIsolinesLabels(canvas, map) {
+        let pixelsRatio = window.devicePixelRatio || 1;
         if (!this.isolinesGeoJson) return;
         if (this.config.isolines.showLabels == false) return;
         let canvasLayer = this.isolinesMarkersLayer;
@@ -455,7 +456,7 @@ class G4RasterLayer extends G4Layer {
         let textColor = luminance > 128?"rgba(0,0,0," + alpha + ")":"rgba(255,255,255," + alpha + ")";
         let fillColor = `rgba(${r},${g},${b},${alpha})`;
         let borderColor = textColor;
-        let borderRadius = 10;
+        let borderRadius = 5 * pixelsRatio;
         for (let m of (this.isolinesGeoJson.markers || [])) {            
             let st = this.roundValue(m.value);
             canvasLayer.drawRoundedRectLabel(m.lat, m.lng, st, borderColor, fillColor, textColor, borderRadius);

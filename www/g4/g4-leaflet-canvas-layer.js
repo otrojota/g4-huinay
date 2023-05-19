@@ -4,7 +4,8 @@ L.CanvasOverlay = L.Layer.extend({
         zIndex:null,
         opacity: 1,
         clearCanvasOnMove: false,
-        contextType: "2d" //webgl, 2d
+        contextType: "2d", //webgl, 2d
+        pixelsRatio: null
     },
   
     initialize: function (options) {
@@ -178,7 +179,7 @@ L.CanvasOverlay = L.Layer.extend({
         if (textAlign == "left") x0 += width / 2;
         else if (textAlign == "right") x0 -= width / 2;
         let y0 = center.y - textHeight / 2 - borderRadius;
-        let height = textHeight + 2*borderRadius;
+        let height = textHeight + borderRadius;
         if (baseLine == "top") y0 += height / 2;
         else if (baseLine == "bottom") y0 -= height / 2;
         ctx.strokeStyle = borderColor;
@@ -208,7 +209,7 @@ L.CanvasOverlay = L.Layer.extend({
         let x0 = center.x + 50;
         let width = maxWidth + 2*borderRadius + 2*margin;
         let y0 = center.y - 50 - maxHeight * lines.length;
-        let height = maxHeight * lines.length + 2*borderRadius + 2*margin;
+        let height = maxHeight * lines.length  + 2*margin;
         // Sombra  
         if (shadow) {      
             ctx.strokeStyle = "rgba(0,0,0,0.2)";
@@ -251,25 +252,27 @@ L.CanvasOverlay = L.Layer.extend({
         ctx.fill();
         ctx.stroke();
     },    
-    drawMarkerCircle(lat, lng, borderColor, fillColor) {        
-        let outerRadius = 15;
+    drawMarkerCircle(lat, lng, borderColor, fillColor) {     
+        let pixelsRatio = this.options.pixelsRatio || window.devicePixelRatio;   
+        let outerRadius = 8*pixelsRatio;
         let ctx = this.getContext2D();
         let center = this.latLngToCanvas(lat, lng);
         ctx.fillStyle = fillColor;
         ctx.strokeStyle = borderColor;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = pixelsRatio;
         ctx.beginPath();
         ctx.arc(center.x, center.y, outerRadius, 0, 2*Math.PI);
         ctx.fill();
         ctx.stroke();
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 2 * pixelsRatio;
         ctx.beginPath();
         ctx.arc(center.x, center.y, outerRadius / 3, 0, 2*Math.PI);
         ctx.fill();
         ctx.stroke();
     },
     drawScale(idx, scale, valueObjectAtPoint, valuePropertiesPoint, maxX) {
-        let scaleHeight = 80, margin = 10, innerMargin = 8;
+        let pixelsRatio = this.options.pixelsRatio || window.devicePixelRatio;
+        let scaleHeight = 40 * pixelsRatio, margin = 5*pixelsRatio, innerMargin = 4*pixelsRatio;
         let x0 = margin, x1 = this._canvas.width - margin;
         if (maxX && x1 > maxX) x1 = maxX - margin;
         if (x1 - x0 < 160) return;
@@ -279,7 +282,7 @@ L.CanvasOverlay = L.Layer.extend({
         ctx.fillStyle = "rgba(0,0,0,0.7)";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.roundRect(x0, y0, (x1 - x0), (y1 - y0), 10);
+        ctx.roundRect(x0, y0, (x1 - x0), (y1 - y0), 5 * pixelsRatio);
         ctx.stroke();
         ctx.fill();
         // rangos
@@ -307,26 +310,26 @@ L.CanvasOverlay = L.Layer.extend({
         this.setFont(10, "Arial");
         let stMin = scale.layer.roundValue(scale.scale.min);
         if (unit) stMin += " [" + unit + "]";
-        this.drawRoundedRectLabelXY(x0 + 2*innerMargin, y0 + 2*innerMargin, stMin, "rgba(255,255,255,1)", "rgba(0,0,0,1)", "rgba(255,255,255,1)", 10, "left", "top");
+        this.drawRoundedRectLabelXY(x0 + 2*innerMargin, y0 + 3*innerMargin, stMin, "rgba(255,255,255,1)", "rgba(0,0,0,1)", "rgba(255,255,255,1)", 10, "left", "top");
         let stMax = scale.layer.roundValue(scale.scale.max);
         if (unit) stMax += " [" + unit + "]";
-        this.drawRoundedRectLabelXY(x1 - 2*innerMargin, y0 + 2*innerMargin, stMax, "rgba(255,255,255,1)", "rgba(0,0,0,1)", "rgba(255,255,255,1)", 10, "right", "top");
+        this.drawRoundedRectLabelXY(x1 - 2*innerMargin, y0 + 3*innerMargin, stMax, "rgba(255,255,255,1)", "rgba(0,0,0,1)", "rgba(255,255,255,1)", 10, "right", "top");
         this.setFont(12, "Arial");
-        this.drawRoundedRectLabelXY((x0 + x1) / 2, ry0 + 4*innerMargin, scale.name, "rgba(0,0,0,1)", "rgba(120,120,255,0.6)", "rgba(0,0,0,1)", 10, "center", "middle");
+        this.drawRoundedRectLabelXY((x0 + x1) / 2, y0 + 3*innerMargin, scale.name, "rgba(0,0,0,1)", "rgba(120,120,255,0.6)", "rgba(0,0,0,1)", 10, "center", "top");
         // Value
         if (valuePropertiesPoint) {
             let x = valueToX(valuePropertiesPoint.value);
             let y = ry0 + (ry1 - ry0) / 2;
             ctx.fillStyle = "rgba(0,0,0,1)";
             ctx.strokeStyle = "rgba(255,255,255,1)";
-            ctx.lineWidth = 2;
+            ctx.lineWidth = pixelsRatio;
             ctx.beginPath();
-            ctx.arc(x, y, 15, 0, 2*Math.PI);
+            ctx.arc(x, y, 8*pixelsRatio, 0, 2*Math.PI);
             ctx.fill();
             ctx.stroke();
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 2*pixelsRatio;
             ctx.beginPath();
-            ctx.arc(x, y, 5, 0, 2*Math.PI);
+            ctx.arc(x, y, 8*pixelsRatio/3, 0, 2*Math.PI);
             ctx.fill();
             ctx.stroke();
         }
@@ -336,7 +339,8 @@ L.CanvasOverlay = L.Layer.extend({
             ctx.strokeStyle = "rgba(255,255,255,1)";
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.rect(x - 3, ry0 + 1, 7, (ry1 - ry0) - 5);
+            let w = 3*pixelsRatio;
+            ctx.rect(x - w/2, ry0 + 2, w, (ry1 - ry0) - 5);
             ctx.fill();
             ctx.stroke();
         }

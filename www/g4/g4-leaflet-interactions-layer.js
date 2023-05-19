@@ -26,6 +26,7 @@ L.G4InteractionsOverlay = L.CanvasOverlay.extend({
     },
     _draw() {
         try {
+            let pixelsRatio = this.options.pixelsRatio || window.devicePixelRatio;
             this.setFont(10, "Arial");       
             this.clear(); 
             if (this.options.objectAtPointPoint) {            
@@ -36,7 +37,7 @@ L.G4InteractionsOverlay = L.CanvasOverlay.extend({
                 while(textColor.length < 4) textColor.push(255);
                 textColor = `rgba(${textColor[0]}, ${textColor[1]}, ${textColor[2]}, ${textColor[3] / 255})`;
                 let borderColor = textColor;
-                this.drawRoundedRectMultiLabelPointing(this.options.objectAtPointPoint.lat, this.options.objectAtPointPoint.lng, this.options.objectAtPointLabel, borderColor, fillColor, textColor, 5);
+                this.drawRoundedRectMultiLabelPointing(this.options.objectAtPointPoint.lat, this.options.objectAtPointPoint.lng, this.options.objectAtPointLabel, borderColor, fillColor, textColor, 5*pixelsRatio);
             }
             if (this.options.propertiesPointPoint) {            
                 let fillColor = [...this.options.propertiesPointFillColor];

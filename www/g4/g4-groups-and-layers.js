@@ -42,6 +42,8 @@ class G4Group {
     async createStationsLayer() {
         let layer = G4Layer.createFromDefinition({name:"Estaciones", type:"stations"});
         await this.addLayer(layer);
+        await layer.g4init();
+        await layer.refresh();
         return layer;
     }
 }

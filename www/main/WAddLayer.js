@@ -3,16 +3,26 @@ const layerIcons = {
     raster: "fas fa-bacon"
 }
 class WAddLayer extends ZDialog {
-    onThis_init() {
+    onThis_init(options) {
         let h = window.innerHeight * 4/5 - 200;
         if (h < 200) h = 200;
         this.layersContainer.view.style["max-height"] = h + "px";
         this.geojsonContainer.view.style["max-height"] = h + "px";
         this.stationsContainer.view.style["max-height"] = h + "px";
         this.edTipoEstacion.setRows(window.config.stationTypes);
+        let action = options?options.action:null;
         let capasEstaciones = window.g4.getLayers().filter(l => l.type == "stations");
         capasEstaciones.splice(0,0,{id:"_new_", name:"Crear Nueva Capa de Estaciones"});
-        this.edCapaEstaciones.setRows(capasEstaciones);
+        let initialLayer = "_new_";
+        if (action == "add-stations") {
+            initialLayer = options.toLayer.id;
+            this.edCapaEstaciones.disable();
+            this.navHeaderVariables.addClass("disabled");
+            this.navHeaderVectoriales.addClass("disabled");
+            let tabTrigger = new bootstrap.Tab(this.navHeaderEstaciones.view);
+            tabTrigger.show();
+        }
+        this.edCapaEstaciones.setRows(capasEstaciones, initialLayer);
         setTimeout(_ => this.edSearch.edSearch.view.focus(), 500);
         this.refresh();
     }
@@ -120,7 +130,7 @@ class WAddLayer extends ZDialog {
                 html += "  <ul class='collapsible-tree-content' style='list-style-type: none;'>";
                 for (let station of stations) {
                     html += "<li class='station-row' data-station-code='" + station.code + "'>";
-                    html += "  <i class='fa-regular fa-square clickable-icon station-selector' ></i>";
+                    html += "  <i class='fa-regular fa-square clickable-icon station-selector mt-1' ></i>";
                     html += "  <a href='#' class='btn btn-link py-0 px-2 station-name text-start'>" + station.name + "</a>";
                     html += "</li>";
                 }

@@ -198,6 +198,13 @@ class Main extends ZCustomController {
                 if (st.length) st += "\n";
                 st += e.layer.name;
                 st += ":\n  => " + e.label;
+            } else if (e.type == "sample") {
+                values.push(e);
+                if (st.length) st += "\n";
+                st += e.title
+                if (e.label) {
+                    st += ":\n  => " + e.label;
+                }
             } else if (e.type == "vector" || e.type == "barb") {
                 values.push(e);
                 if (st.length) st += "\n";

@@ -150,7 +150,9 @@ class MapControls extends ZCustomController {
         } else if (layer.type == "geojson") {
             panels.push({panel:"./config-panels/GeoJsonColors", panelOptions:{layer}, title:"Color Elementos", opened: true})
         } else if (layer.type == "stations") {
-            panels.push({panel:"./config-panels/StationsColors", panelOptions:{layer}, title:"Color Estaciones", opened: true})
+            panels.push({panel:"./config-panels/StationsColors", panelOptions:{layer}, title:"Color Estaciones", opened: false})
+            panels.push({panel:"./config-panels/StationsScale", panelOptions:{layer}, title:"Monitorear Variable", opened: true})
+            panels.push({panel:"./config-panels/EditarEstaciones", panelOptions:{layer}, title:"Editar Estaciones", opened: false})
         }
         await window.g4.mainController.loadLeftPanel("main/MultiPanelsLoader", {panels}, layer.name);
     }

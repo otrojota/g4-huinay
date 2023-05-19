@@ -7,15 +7,16 @@ class VectorValue extends ZCustomController {
     }
 
     drawVector(value) {
+        let pixelsRatio = window.devicePixelRatio || 1;
         let canvas = this.canvas.view;        
-        canvas.width = window.devicePixelRatio * canvas.offsetWidth;
-        canvas.height = window.devicePixelRatio * canvas.offsetHeight;        
+        canvas.width = pixelsRatio * canvas.offsetWidth;
+        canvas.height = pixelsRatio * canvas.offsetHeight;        
         let ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         let w = canvas.width, h = canvas.height;
-        let l = 30;
+        let l = 15*pixelsRatio;
         ctx.strokeStyle = "rgba(0,0,0,1)";
-        ctx.lineWidth = 3;
+        ctx.lineWidth = pixelsRatio;
 
         let angle = Math.atan2(value.u, value.v);
         ctx.translate(w/2, h/2);

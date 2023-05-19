@@ -19,12 +19,14 @@ L.G4StationsOverlay = L.CanvasOverlay.extend({
     _draw() {
         try {
             this.clear(); 
+            let pixelsRatio = window.pixelsRatio || 1;
             let stations = this.options.getStations();
-            console.log("drawStations", stations);            
             if (!stations || !stations.length) return;
             let ctx = this.getContext2D();
+            this.setFont(10, "Arial");
             for (let s of stations) {
                 let center = this.latLngToCanvas(s.lat, s.lng);
+                s.center = center; // Se almacena para acelerar búsqueda de puntos cercanos
                 let style = this.options.getStationStyle(s);
                 let radius = style.radius || 20;
                 let borderColor = style.borderColor;
@@ -42,6 +44,10 @@ L.G4StationsOverlay = L.CanvasOverlay.extend({
                 ctx.arc(center.x, center.y, radius, 0, 2*Math.PI);
                 ctx.fill();
                 if (borderColor) ctx.stroke();
+                // Label
+                if (style.label) {
+                    this.drawRoundedRectLabelXY(center.x + (radius + 5) * pixelsRatio, center.y - (radius + 5) * pixelsRatio, style.label, "rgb(255,255,255)", "rgb(0,0,0)", "rgb(255,255,255)", 10, "left", "middle")
+                }
             }
         } catch (error) {
             console.error(error);

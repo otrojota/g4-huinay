@@ -192,15 +192,23 @@ class G4 {
     }
 
     createColorScale(geoserver, scaleName, scaleConfig) {
+        if (!geoserver) geoserver = this.getDefaultGeoserver();
         let factory = this.geoServersColorScales[this.getGeoserverURL(geoserver)];
         let scaleDef = factory.byName(scaleName);
         if (!scaleDef) throw "No se encontró la escala de colores '" + scaleName + "' en el servidor"
         return factory.createScale(scaleDef, scaleConfig);
     }
     getGeoserverColorScales(geoserver) {
+        if (!geoserver) geoserver = this.getDefaultGeoserver();
         let url = this.getGeoserverURL(geoserver);
         if (!url) throw "No se encontró el geoserver '" + geoserver + "'";
         return this.geoServersColorScales[url].colorScales;
+    }
+    getDefaultGeoserver() {
+        return Object.keys(window.config.geoservers)[0];
+    }
+    getDefaultColorScales() {
+        return this.getGeoserverColorScales(this.getDefaultGeoserver());
     }
 
     // Zreposervers
