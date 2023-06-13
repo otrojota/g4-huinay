@@ -15,18 +15,28 @@
             <button id="cmdCloseRightPanel" class="btn btn-sm boton-cerrar-offcanvas-right">
                 <i class="fa-solid fa-xmark fa-2x"></i>
             </button>
-            <h5 id="lblRightPanelTitle" class="mt-2 text-end">Título del Panel Derecho</h5>
+            <h5 id="lblRightPanelTitle" class="mt-2 text-end w-100">Título del Panel Derecho</h5>
         </div>
         <div style="overflow-y: auto;">
             <div id="rightPanelLoader" class="right-panel-content" data-z-load="common/Empty"></div>
         </div>
     </div>
+    <div id="bottomPanel" class="offcanvas offcanvas-bottom bottom-panel-container" tabindex="-1" data-bs-backdrop="false">
+        <div id="analysis" data-z-component="main/analysis/AnalysisPanel"></div>
+    </div>
+
     <div id="map" data-z-component="./g4/G4Map" style="height: 100%;"></div>
     <div id="controlsCollapser" class="map-controls-collapser">
         <button id="cmdControlsCollapser" class="btn btn-sm map-control-button" style="left:5px; top: 5px; width: 35px; height: 35px;">
             <i id="controlsExpandedIcon" class="fas fa-chevron-right float-start mx-2 mt-1 expanded" ></i>
         </button>
-        <div id="lblCollapserLabel" class="map-controls-collapser-label text-center pt-1" style="left: 45px; top: 5px; width: 270px; height: 35px; ">G4 @ Huinay</div>
+        <div id="lblCollapserLabel" class="map-controls-collapser-label text-center pt-1" style="left: 45px; top: 5px; width: 230px; height: 35px; ">G4 @ Huinay</div>
+        <button id="cmdChartsOpener" class="btn btn-sm map-control-button" style="left:280px; top: 5px; width: 35px; height: 35px;">
+            <i class="fas fa-chart-line float-end mx-2 mt-1" ></i>
+        </button>
     </div>
     <div id="controls" data-z-component="./main/MapControls"></div>
+    <div id="hintPanel" class="hint-panel">
+        Texto de prueba de link para hacer click <a class="hint-link btn-link" data-code="test">Acá</a>
+    </div>
 </div>

@@ -66,6 +66,7 @@ class G4Layer {
             case "geojson": return new G4GeoJsonLayer(def.name, defClone.config);
             case "raster": return new G4RasterLayer(def.name, defClone.config);
             case "stations": return new G4StationsLayer(def.name, defClone.config);
+            case "user-objects": return new G4UserObjectsLayer(def.name, defClone.config || {});
             default: throw "Layer Type '" + def.type + "' not handled";
         }
     }    

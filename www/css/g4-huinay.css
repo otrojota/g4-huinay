@@ -97,6 +97,7 @@
     background-color: rgb(240,240,240);
 }
 .right-panel-title {
+    display: flex;
     text-align: left;
     border-bottom: 0.5px solid gray;
     background-color: lightgray;
@@ -105,18 +106,53 @@
     padding: 5px;
 }
 
+.bottom-panel-container {
+    z-index: 100000;
+    opacity: 0.9;
+    background-color: rgb(240,240,240);
+}
+.analysis-header {
+    padding-top: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+    background-color: rgb(160,160,160);
+}
+.analysis-tab-menu {
+    border: none;
+    background-color: transparent;
+}
+.analysis-content {
+    overflow: auto;
+}
+
 .boton-cerrar-offcanvas {
     position: absolute;
     right: 10px; top: 10px;
     width: 40px;
     height: 40px;
 }
-.boton-cerrar-offcanvas-right {
+
+.boton-cerrar-offcanvas-right_old {
     position: absolute;
     left: 10px; top: 10px;
     width: 40px;
     height: 40px;
 }
+
+.boton-expandir-offcanvas {
+    position: absolute;
+    right: 45px; top: 10px;
+    width: 40px;
+    height: 40px;
+    transition: 0.3s ease-in-out;
+}
+
+.boton-expandir-offcanvas.expanded i {
+    transform: rotate(180deg);
+    transition: 0.3s ease-in-out;
+}
+
+
 .map-control-layers-container {
     position: absolute;
     overflow: hidden;
@@ -204,4 +240,24 @@
 .station-row {
     display: flex;
     text-align: start;
+}
+
+.hint-panel {
+    position: absolute;
+    z-index: 100001;
+    background-color: rgba(50,50,50,200);
+    color: white;
+    padding: 5px;
+    border-radius: 5px;
+    border: 2px solid white;
+    width: 300px;
+    top: 10px;
+    overflow-y: auto;
+    max-height: 200px;
+    min-height: 60px;
+    left: 340px;
+    transition: 0.5s all;
+}
+.hint-link {
+    cursor: pointer;
 }

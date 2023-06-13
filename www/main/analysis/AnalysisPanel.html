@@ -1,0 +1,38 @@
+<div>
+    <div id="header" class="analysis-header">
+        <div id="tabsContainer">
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <div class="nav-link active">
+                        <a class="text-dark" href="#">
+                            Análisis 1
+                        </a>
+                        <div style="display: inline;">
+                            <button id="cmdMenu" class="ms-2 analysis-tab-menu" data-toggle="dropdown" data-bs-toggle="dropdown" type="button"><i class="fas fa-ellipsis-vertical"></i></button>
+                            <ul class="dropdown-menu" aria-labelledby="cmdMenu">
+                                <li><a class="dropdown-item" href="#">Action</a></li>
+                                <li><a class="dropdown-item" href="#">Another action</a></li>
+                                <li><a class="dropdown-item" href="#">Something else here</a></li>
+                            </ul>
+                        </div>       
+                    </div>
+                </li>
+                <li class="nav-item ms-2">
+                    <a class="nav-link text-dark" href="#">Análisis 2</a>
+                </li>
+                <li class="nav-item ms-2 pt-2">
+                    <button class="ms-2 analysis-tab-menu"><i class="fas fa-plus"></i></button>
+                </li>
+            </ul>
+        </div>
+        <button id="cmdExpandAnalysis" class="btn btn-sm boton-expandir-offcanvas" style="margin-top: -7px;">
+            <i class="fa-solid fa-chevron-up fa-2x"></i>
+        </button>
+        <button id="cmdCloseAnalysis" class="btn btn-sm boton-cerrar-offcanvas" style="margin-top: -7px;">
+            <i class="fa-solid fa-xmark fa-2x"></i>
+        </button>
+    </div>
+    <div id="analysisContent" class="p-2 analysis-content">
+        <div id="analysisCanvas" class="border rounded border-2"></div>
+    </div>
+</div>

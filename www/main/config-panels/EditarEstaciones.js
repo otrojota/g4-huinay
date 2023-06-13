@@ -22,7 +22,6 @@ class EditarEstaciones extends ZCustomController {
             }
         }
         layers.sort((l1, l2) => (l1.name > l2.name?1:-1));
-        console.log("layers", layers);
         let html = "<ul style='list-style-type: none; padding-left: 4px;'>";
         for (let layer of layers) {
             let stations = this.layer.stations.filter(s => s.group.code == layer.code);

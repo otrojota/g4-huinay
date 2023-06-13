@@ -32,7 +32,24 @@ class G4 {
         let idx = listeners.indexOf(listener);
         if (idx >= 0) listeners.splice(idx, 1);
     }
+    removeAll(eventName) {
+        let listeners = this.eventListeners[eventName];
+        if (listeners) {
+            for (let l of listeners) this.remove(eventName, l);
+        }
+    }
     async trigger(eventName, data) {
+        // map-click-interceptor se ejecuta una vez y se borra, reemplazando al map-click normal
+        // se usar paea agregar objetos de usuario
+        if (eventName == "map-click") {
+            let interceptors = this.eventListeners["map-click-interceptor"];
+            if (interceptors && interceptors.length) {
+                let r = interceptors[0](data);
+                if (r instanceof Promise) await r;
+                this.eventListeners["map-click-interceptor"] = null;
+                return;
+            }
+        }
         let listeners = this.eventListeners[eventName];
         if (!listeners) return;
         let promises = [];

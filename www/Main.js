@@ -1,5 +1,6 @@
 class Main extends ZCustomController {
     async onThis_init() {
+        window.addEventListener("resize", _ => this.onResize());
         let cfg = await zPost("getConfig.portal");
         window.config = cfg;
         window.g4.createDefaultGroup();
@@ -9,6 +10,7 @@ class Main extends ZCustomController {
         await this.map.g4init();
         window.g4.mapControls = this.controls;
         this.controls.g4init();
+        window.g4.analysisController = this.analysis;
 
         this.leftOffsetCanvas = new bootstrap.Offcanvas(this.leftPanel.view);
         this.leftPanel.view.addEventListener("shown.bs.offcanvas", _ => window.g4.trigger("left-panel-opened"));
@@ -19,12 +21,14 @@ class Main extends ZCustomController {
             let w = this.leftPanel.view.offsetWidth;
             this.controls.controlsContainer.view.style.left = (10 + w) + "px";
             this.controlsCollapser.view.style.left = (10 + w) + "px";
+            this.hintPanel.view.style.left = (20 + w + this.controls.controlsContainer.view.offsetWidth) + "px";
         })
         window.g4.on("left-panel-closed", async _ => {
             this.leftPanelOpened = false;
             await this.leftPanelLoader.load("common/Empty", {});
             this.controls.controlsContainer.view.style.left = "10px";
             this.controlsCollapser.view.style.left = "10px";
+            this.hintPanel.view.style.left = (20 + this.controls.controlsContainer.view.offsetWidth) + "px";
         })
 
         this.rightOffsetCanvas = new bootstrap.Offcanvas(this.rightPanel.view);
@@ -42,10 +46,26 @@ class Main extends ZCustomController {
             this.callRefreshScalesAndProperties();
         })
 
+        this.bottomOffsetCanvas = new bootstrap.Offcanvas(this.bottomPanel.view);
+        this.bottomPanel.view.addEventListener("shown.bs.offcanvas", _ => {
+            window.g4.trigger("analysis-panel-opened");
+            this.analysis.showContent();
+            this.bottomPanelOpened = true;
+        });
+        this.bottomPanel.view.addEventListener("hidden.bs.offcanvas", _ => {
+            window.g4.trigger("analysis-panel-closed");
+            this.bottomPanelOpened = false;
+        });
+        this.bottomPanelOpened = false;
+        this.bottomPanelMaximized = false;
+
         window.g4.on("map-click", e => this.onMapClick(e));
         window.g4.on("map-mouse-move", e => this.onMapMouseMove(e));
 
         this.rightOffsetCanvas = new bootstrap.Offcanvas(this.rightPanel.view);
+
+        this.hintPanel.hide();
+        this.hintPanelOpened = false;
 
         // Refrescado de Escalas
         window.g4.on("layer-added", _ => this.callRefreshScalesAndProperties())
@@ -106,6 +126,32 @@ class Main extends ZCustomController {
         this.rightOffsetCanvas.hide();
     }
 
+    onCmdChartsOpener_click() {
+        this.toggleBottomPanel();
+    }
+    onAnalysis_close() {
+        this.closeBottomPanel();
+    }
+    onAnalysis_toggleExpanded() {
+        this.bottomPanelMaximized = !this.bottomPanelMaximized;
+        this.onResize();
+        this.analysis.showMaximized(this.bottomPanelMaximized);
+    }
+    toggleBottomPanel() {
+        if (!this.bottomPanelOpened) {
+            let h = window.innerHeight;
+            if (!this.bottomPanelMaximized) h /= 2;
+            this.bottomPanel.view.style.height = h + "px";
+            this.bottomOffsetCanvas.show();
+            this.analysis.showMaximized(this.bottomPanelMaximized);
+        } else {
+            this.closeBottomPanel();
+        }
+    }
+    closeBottomPanel() {
+        this.bottomOffsetCanvas.hide();
+    }
+
     onCmdControlsCollapser_click() {
         if (this.controlsExpanded) {
             this.controls.setCollapsed();
@@ -163,10 +209,17 @@ class Main extends ZCustomController {
             } else if (element.type == "barb") {
                 values.push(element);
                 panels.push({panel:"./details-panels/BarbValue", panelOptions:{element}, title:element.layer.name, opened: true})
+            } else if (element.type == "sample") {
+                values.push(element);
+                panels.push({panel:"./details-panels/StationValues", panelOptions:{element}, title:element.station.name, opened: true})
             }
         }
-        window.g4.mapController.setPropertiesPoint(e.latlng.lat, e.latlng.lng, values);
-        await this.loadRightPanel("main/MultiPanelsLoader", {panels}, title);
+        if (panels.length) {
+            window.g4.mapController.setPropertiesPoint(e.latlng.lat, e.latlng.lng, values);
+            await this.loadRightPanel("main/MultiPanelsLoader", {panels}, title);
+        } else {
+            this.closeRightPanel();
+        }
     }
 
     showObjectAtPoint(lat, lng) {
@@ -210,6 +263,9 @@ class Main extends ZCustomController {
                 if (st.length) st += "\n";
                 st += e.layer.name;
                 st += ":\n  => " + e.label;
+            } else if (e.type == "user-object") {
+                if (st.length) st += "\n";
+                st += "Objeto: " + e.name;
             }
         }
         window.g4.mapController.setObjectAtPoint(lat, lng, st, values);
@@ -231,5 +287,39 @@ class Main extends ZCustomController {
         }, []);
         window.g4.mapController.setActiveScales(scales);
     }    
+
+    onResize() {
+        if (this.bottomPanelOpened) {
+            let h = window.innerHeight;
+            if (!this.bottomPanelMaximized) h /= 2;
+            this.bottomPanel.view.style.height = h + "px";
+            this.analysis.resize();
+        }
+    }
+
+    // Hints - Interceptors
+    showHint(html, linkActions, clickInterceptor) {
+        this.hintPanel.html = html;
+        this.hintPanel.findAll(".hint-link").forEach(l => {
+            l.addEventListener("click", _ => {
+                let code = l.getAttribute("data-code");
+                let action = linkActions[code];
+                if (action) action();
+            })
+        })
+        if (clickInterceptor) {
+            window.g4.on("map-click-interceptor", point => {
+                window.g4.removeAll("map-click-interceptor");
+                clickInterceptor(point);
+            })
+        }
+        this.hintPanel.show();
+    }
+    cancelHint() {
+        window.g4.removeAll("map-click-interceptor");
+        this.hintPanel.hide();
+        this.hintPanel.html = "";
+    }
+    closeHint() {this.cancelHint()}
 }
 ZVC.export(Main);

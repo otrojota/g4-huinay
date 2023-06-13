@@ -77,7 +77,6 @@ class G4StationsLayer extends G4Layer {
                 this.aborters.push(controller);
             }
             let res = await Promise.all(promises);
-            console.log("res", res);
             // Buscar punto más cercano (tiempo) para cada estación
             let valores = {}; // {codigoEstacion:{time, value}}
             for (let i=0; i<res.length; i++) {
@@ -193,20 +192,23 @@ class G4StationsLayer extends G4Layer {
                         elements.push({
                             type: "sample", 
                             title: this.name + " / " + s.name,
-                            label
+                            label,
+                            layerId:this.id, station: s
                         })
                     } else {
                         elements.push({
                             type: "sample", 
                             title: this.name + " / " + s.name,
-                            label: "Sin Datos"
+                            label: "Sin Datos",
+                            layerId:this.id, station: s
                         })
                     }
                 } else {
                     elements.push({
                         type: "sample", 
                         title: this.name + " / " + s.name,
-                        label: null
+                        label: null,
+                        layerId:this.id, station: s
                     })
                 }
             }

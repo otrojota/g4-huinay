@@ -253,5 +253,9 @@ class WAddLayer extends ZDialog {
     onCmdAgregarEstaciones_click() {
         this.close({layer: this.edCapaEstaciones.value, stations:this.selectedStations, type:"stations"});
     }
+
+    onCmdUserObjects_click() {
+        this.close({type:"user-objects", name:"Objetos de Usuario"});
+    }
 }
 ZVC.export(WAddLayer);
