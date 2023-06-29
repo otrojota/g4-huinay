@@ -115,7 +115,7 @@
     padding-top: 5px;
     padding-left: 5px;
     padding-right: 5px;
-    background-color: rgb(160,160,160);
+    background-color: rgb(200,200,200);
 }
 .analysis-tab-menu {
     border: none;
@@ -260,4 +260,30 @@
 }
 .hint-link {
     cursor: pointer;
+}
+
+.analysis-window {
+    background-color: rgb(179, 196, 217);
+    color: black;
+    border-radius: 4px;
+    border-width: 2px;
+    border-color: rgb(82, 101, 124);
+}
+.analysis-window-header {
+    height: 30px;
+    border-bottom: 1px solid rgb(82, 101, 124);
+    cursor: move; /* fallback if grab cursor is unsupported */
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
+.analysis-window-menu {
+    border: none;
+    background-color: transparent;
+}
+.analysis-window-title {
+    padding: 5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }

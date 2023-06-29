@@ -252,5 +252,22 @@ class G4 {
         }
         this.stationLayers = stationLayers;
     }
+
+    async getEstacion(groupCode, stationCode) {
+        if (!this.stationLayers) await this.leeCacheEstaciones();
+        let layer = this.stationLayers.find(l => l.code == groupCode);
+        if (!layer) throw "No se encontró la capa (grupo) de estaciones '" + groupCode + "'"
+        let station = JSON.parse(JSON.stringify(layer.stations.find(st => st.code == stationCode)));
+        if (!station) throw "No se encontró la estación '" + stationCode + "' en la capa (grupo) de estaciones '" + groupCode + "'"
+        station.group = layer
+        let zrepoClient = await this.getZRepoClient(layer.config.zreposerver);
+        let variables = [];
+        for (let v of station.variables) {
+            variables.push(await zrepoClient.getVariable(v));
+        }
+        station.variables = variables;
+        return station;
+    }
+
 }
 window.g4 = new G4();

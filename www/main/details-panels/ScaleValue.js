@@ -1,6 +1,7 @@
 class ScaleValue extends ZCustomController {
     onThis_init(options) {
         let e = options.element;
+        this.element = e;
         let scale = window.g4.mapController.getActiveScale(e.scaleId);
         if (!scale) return;
         this.lblValue.text = e.label;
@@ -94,6 +95,14 @@ class ScaleValue extends ZCustomController {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle"; 
         ctx.fillText(text, x0 + width / 2, y0 + height / 2);
+    }
+
+    async onCmdShowChart_click() {
+        await window.g4.analysisController.openAnalysis("time-serie", {
+            type: "raster",
+            layer: this.element.layer,
+            title: this.element.layer.name
+        })
     }
 }
 ZVC.export(ScaleValue);

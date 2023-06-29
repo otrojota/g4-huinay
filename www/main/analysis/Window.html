@@ -1,0 +1,44 @@
+<div id="w" class="analysis-window" style="position: absolute; top:0; left:0; border: 1px solid black;">
+    <div id="header" class="analysis-window-header">
+        <h6 id="title" class="analysis-window-title" style="position:absolute; left:0; top:0; height: 30px;">Título de la Ventana</h6>
+        <div style="display: inline; position:absolute; top:0; right: 5px; width:20px;height: 30px;">
+            <button id="cmdMenu" class="ms-2 analysis-window-menu float-end" data-toggle="dropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" type="button"><i class="fas fa-ellipsis-vertical"></i></button>
+            <ul id="windowMenu" class="dropdown-menu" aria-labelledby="cmdMenu">
+                <li><a id="cmdConfigure" class="dropdown-item" href="#">
+                    <i class="fas fa-gears me-2"></i>Configurar
+                </a></li>
+                <li>
+                    <div class="btn-group dropend">
+                        <a id="cmdMove" type="button" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" href="#">
+                            <i class="fas fa-folder-tree me-2"></i>Mover a otra Área de Trabajo
+                        </a>
+                        <ul id="moveMenu" class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    Uno
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    Dos
+                                </a>
+                            </li>
+                    </div>
+                </li>
+                <li><a id="cmdRename" class="dropdown-item" href="#">
+                    <i class="fas fa-pencil me-2"></i>Cambiar Título
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a id="cmdClose" class="dropdown-item" href="#">
+                    <i class="far fa-trash-can me-2"></i>Cerrar esta Ventana
+                </a></li>
+            </ul>
+        </div>
+    </div>
+    <div id="loader" data-z-load="common/Empty" style="position: absolute; top:35px; left: 5px; bottom:5px; background-color: white; right:5px;"></div>
+    <div id="working" style="position: absolute; top:35px; left: 5px; bottom:5px; background-color: rgba(0,0,0, 0.5); right:5px; overflow: hidden;">
+        <div style="text-align: center;">
+            <i class="fas fa-spin fa-spinner fa-2x" style="margin-top: 10px;"></i>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,59 @@
+<div>
+    <div id="dbg"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-3">
+                <label for="edOrigen" class="mt-2">Origen de la Variable</label>
+            </div>
+            <div class="col-9">
+                <select id="edOrigen" class="form-select" data-z-id-field="code" data-z-label-field="name"></select>
+            </div>
+        </div>        
+        <div id="panelEstacion" class="row">
+            <hr class="mb-2 mt-2" />
+            <div class="container">
+                <div class="row">
+                    <div class="col-9">
+                        <div id="lblEstacion" class="w-100 border rounded p-2"></div>
+                    </div>
+                    <div class="col-3">
+                        <button id="cmdSeleccionarEstacion" class="btn btn-primary w-100">
+                            Seleccionar
+                            <i class="fas fa-magnifying-glass ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-3">
+                        <label class="form-label mt-2">Graficar Variable</label>
+                    </div>
+                    <div class="col-9">
+                        <select id="edVariable" class="form-select" data-z-id-field="code" data-z-label-field="name"></select>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-3">
+                        <label class="form-label mt-2">Nombre de la Serie</label>
+                    </div>
+                    <div class="col-9">
+                        <input id="edName" class="form-control" data-z-autochange-delay="300">
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-3">
+                        <label class="form-label mt-2">Mostrar Valor</label>
+                    </div>
+                    <div class="col-3">
+                        <select id="edAcumulador" class="form-select" data-z-id-field="code" data-z-label-field="name"></select>
+                    </div>
+                    <div class="col-6">
+                        <select id="edTemporalidad" class="form-select" data-z-id-field="code" data-z-label-field="name"></select>
+                    </div>
+                </div>
+                <div id="timeDefInicio" data-z-component="./../TimeDef"></div>
+                <div id="timeDefFin" data-z-component="./../TimeDef"></div>
+            </div>
+        </div>
+        <div id="panelPunto" class="row"></div>
+    </div>
+</div>

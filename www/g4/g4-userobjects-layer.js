@@ -52,7 +52,7 @@ class G4UserObjectsLayer extends G4Layer {
         let canvasPoint = this.canvasLayer.latLngToCanvas(lat, lng); 
         let found = [];
         for (let o of this.objects) {
-            if (o.inPoint(lat, lng, canvasPoint)) found.push({type:"user-object", subtype:o.type, name:o.name, object:o});
+            if (o.inPoint(lat, lng, canvasPoint)) found.push({type:"user-object", subtype:o.type, name:o.name, object:o, layer:this});
         }
         return found;
     }

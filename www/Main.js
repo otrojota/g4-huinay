@@ -136,7 +136,7 @@ class Main extends ZCustomController {
         this.bottomPanelMaximized = !this.bottomPanelMaximized;
         this.onResize();
         this.analysis.showMaximized(this.bottomPanelMaximized);
-    }
+    }    
     toggleBottomPanel() {
         if (!this.bottomPanelOpened) {
             let h = window.innerHeight;
@@ -147,6 +147,10 @@ class Main extends ZCustomController {
         } else {
             this.closeBottomPanel();
         }
+    }
+    async openBottomPanel() {
+        if (this.bottomPanelOpened) return;
+        await this.toggleBottomPanel();
     }
     closeBottomPanel() {
         this.bottomOffsetCanvas.hide();
@@ -212,6 +216,10 @@ class Main extends ZCustomController {
             } else if (element.type == "sample") {
                 values.push(element);
                 panels.push({panel:"./details-panels/StationValues", panelOptions:{element}, title:element.station.name, opened: true})
+                panels.push({panel:"./details-panels/ObjectDetails", panelOptions:{element}, title:"Estación: " + element.station.name, opened: true})
+            } else if (element.type == "user-object") {
+                values.push(element);
+                panels.push({panel:"./details-panels/ObjectDetails", panelOptions:{element}, title:element.subtype + ": " + element.name, opened: true})
             }
         }
         if (panels.length) {
@@ -224,8 +232,8 @@ class Main extends ZCustomController {
 
     showObjectAtPoint(lat, lng) {
         let found = [];
-        let geoJsonLayers = window.g4.getLayersFromTop();
-        for (let l of geoJsonLayers) {
+        let layers = window.g4.getLayersFromTop();
+        for (let l of layers) {
             let element = l.elementAtPoint(lat, lng);
             if (element) {
                 if (Array.isArray(element)) found.push(...element);
