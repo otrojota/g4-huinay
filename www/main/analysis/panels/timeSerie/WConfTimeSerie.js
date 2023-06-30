@@ -1,8 +1,8 @@
 class WConfTimeSerie extends ZDialog {
     async onThis_init(config) {
         this.config = config;
-        await this.serie1Loader.content.refresh(this.config.serie1);
-        await this.serie2Loader.content.refresh(this.config.serie2);
+        await this.serie1Loader.content.refresh(this.config.serie1, true);
+        await this.serie2Loader.content.refresh(this.config.serie2, false);
     }
     onCmdCloseDialog_click() {this.cancel()}
 

@@ -481,6 +481,13 @@ class ZDynamicSelect extends ZSelect {
             return html;
         }, (this.placeHolder?("<option disabled selected hidden value>" + this.placeHolder + "</option>"):""));
     }
+    disableRow(code) {
+        let idx = this.rows.findIndex(r => r[this.idField] == code);
+        if (idx < 0) throw "Row code '" + code + "' not found"
+        let o = this.find("option[value='" + idx + "']");
+        console.log("o", o);
+        o.setAttribute("disabled", true);
+    }
 }
 ZVC.registerComponent("SELECT", e => (e.getAttribute("data-z-id-field") && e.getAttribute("data-z-label-field")), ZDynamicSelect);
 

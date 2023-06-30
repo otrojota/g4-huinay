@@ -17,11 +17,13 @@ class TimeSerieSerie extends ZCustomController {
             code:"n", name:"N° Muestras"
         }]);
     }
-    async refresh(serieConfig) {
+    async refresh(serieConfig, primaria) {
         console.log("serie refresh", serieConfig);
         this.config = serieConfig || {};
+        this.primaria = primaria;
         if (!this.config.type) this.edOrigen.value = "no";
         else this.edOrigen.value = this.config.type;
+        if (primaria) this.edOrigen.disableRow("no");
         this.panelEstacion.hide();
         this.panelPunto.hide();
         if (this.edOrigen.value == "station") {
@@ -32,7 +34,20 @@ class TimeSerieSerie extends ZCustomController {
         }
     }
 
+    onEdOrigen_change() {
+        if (this.edOrigen.value == "station") {
+            this.panelEstacion.show();
+            this.panelPunto.hide();
+            this.refresh({type:"station"});
+        } else {
+            this.panelEstacion.hide();
+            this.panelPunto.show();
+            this.refresh({type:"point"});
+        }
+    }
+
     refreshTemporalities() {
+        if (!this.config.timeDef) return;
         let tempos = [];
         for (let i=0; i<G4Query.temporalities.length; i++) {
             if (i >= this.config.timeDef.level) tempos.push({code:G4Query.temporalities[i], name:G4Query.tempDescs[i]});            
@@ -41,15 +56,26 @@ class TimeSerieSerie extends ZCustomController {
     }
 
     async refreshStation() {
+        if (!this.config.station) {
+            this.lblEstacion.html = `
+                <div class="text-danger">
+                    Debe seleccionar una estación
+                </div>
+            `;    
+            return;
+        }
         this.station = await window.g4.getEstacion(this.config.group.code, this.config.station.code);
         let txt = "Estación '" + this.station.name + "' desde '" + this.station.group.name + "'";
-        this.lblEstacion.text = txt;
-        this.edVariable.setRows(this.station.variables, this.config.variable.code);
+        this.lblEstacion.text = txt;        
         this.edName.value = this.config.name;
+        this.edVariable.setRows(this.station.variables, this.config.variable?this.config.variable.code:null);
+        if (!this.config.variable) this.onEdVariable_change();
         this.edAcumulador.value = this.config.accum;
+        if (!this.config.accum) this.onEdAcumulador_change();
     }
 
-    refreshTimeDefs() {        
+    refreshTimeDefs() {
+        if (!this.config.timeDef) return;
         this.timeDefInicio.refresh("Tiempo Inicial", this.config.timeDef.level, this.config.timeDef.t0, true, this.edTemporalidad.value);
         this.timeDefFin.refresh("Tiempo Final", this.config.timeDef.level, this.config.timeDef.t1, false, this.edTemporalidad.value);
     }
@@ -94,6 +120,19 @@ class TimeSerieSerie extends ZCustomController {
             throw "Error en el tiempo final: " + error;
         }
         return this.config;
+    }
+
+    onCmdSeleccionarEstacion_click() {
+        this.showDialog("./../../WSelectStation", {}, ({group, station, searchPeriod, stationField, timeZone, zreposerver}) => {
+            console.log("station", station);
+            this.config.station = station;
+            this.config.group = group;
+            this.config.searchPeriod = searchPeriod;
+            this.config.stationField = stationField;
+            this.config.timeZone = timeZone;
+            this.config.zreposerver = zreposerver;
+            this.refreshStation()
+        })
     }
 }
 
