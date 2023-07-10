@@ -98,8 +98,24 @@ class ScaleValue extends ZCustomController {
     }
 
     async onCmdShowChart_click() {
+        let found = [];
+        for (let l of window.g4.getLayersFromTop()) {
+            let element = l.elementAtPoint(this.element.coords.lat, this.element.coords.lng);
+            if (element) {
+                let elements = Array.isArray(element)?element:[element];
+                for (let e of elements) {
+                    if (e.type == "user-object" && e.subtype == "point") {
+                        found.push(e);
+                    }
+                }
+            }
+        }
+        let point;
+        if (found.length) point = found[0];
+        else point = await window.g4.createPoint(this.element.coords.lat, this.element.coords.lng);
         await window.g4.analysisController.openAnalysis("time-serie", {
-            type: "raster",
+            type: "create-from-raster",
+            point,
             layer: this.element.layer,
             title: this.element.layer.name
         })

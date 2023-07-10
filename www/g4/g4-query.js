@@ -27,6 +27,16 @@ class G4Query {
             config.filter[serieConfig.stationField] = serieConfig.station.code;
             config.temporality = serieConfig.temporality;
             config.timeDef = serieConfig.timeDef;
+            config.accum = serieConfig.accum || "avg";
+            config.tz = serieConfig.tz || "America/Santiago";
+            return new G4Query(config);
+        } else if (config.type == "raster") {
+            config.geoserver = serieConfig.geoserver;
+            config.dataSet = serieConfig.dataSet;
+            config.variable = serieConfig.variable;
+            config.temporality = serieConfig.temporality;
+            config.timeDef = serieConfig.timeDef;
+            config.point = serieConfig.point;
             return new G4Query(config);
         }
         throw "Serie tipo " + config.type + " No Implementada";
@@ -68,10 +78,71 @@ class G4Query {
         return {temporality, timeDef};
     }
 
+    static createDefaultTimeDefForRaster(varTemporality) {
+        let temporality, timeDef;
+        if (varTemporality.unit == "hours" || varTemporality.unit == "minutes") {
+            temporality = "1h";
+            timeDef = {
+                level:2,
+                t0: {type: "relative", unit:"hours", value: -24*3},
+                t1: {type: "relative", unit:"hours", value: 24}
+            }
+        } else if (varTemporality.unit == "days") {
+            temporality = "1d";
+            timeDef = {
+                level:3,
+                t0: {type: "relative", unit:"days", value: -30},
+                t1: {type: "relative", unit:"days", value: 0}
+            }
+        } else if (varTemporality.unit == "months") {
+            temporality = "1M";
+            timeDef = {
+                level:4,
+                t0: {type: "relative", unit:"months", value: -6},
+                t1: {type: "relative", unit:"months", value: 0}
+            }
+        } else if (varTemporality.unit == "years") {
+            temporality = "1y";
+            timeDef = {
+                level:4,
+                t0: {type: "relative", unit:"years", value: -6},
+                t1: {type: "relative", unit:"years", value: 0}
+            }
+        }
+        return {temporality, timeDef};
+    }
+
     constructor(config) {
         this.config = config;
     }
 
+    _getJSON(url, signal) {
+        return new Promise((resolve, reject) => {
+            fetch(url, {signal:signal})
+                .then(res => {
+                    if (res.status != 200) {
+                        res.text()
+                            .then(txt => reject(txt))
+                            .catch(_ => reject(res.statusText))
+                        return;
+                    }
+                    res.json()
+                        .then(json => {resolve(json)})
+                        .catch(err => {reject(err)})
+                })
+                .catch(err => {
+                    reject(err.name == "AbortError"?"aborted":err)
+                });
+        })
+    }
+
+    extractValue(d, accum) {
+        if (accum == "avg") return d.value / d.n;
+        if (accum == "min") return d.min;
+        if (accum == "max") return d.max;
+        if (accum == "n") return d.n;
+        throw "Acumulador '" + accum + "' no manejado"
+    }
     async execute() {
         if (this.config.queryType == "time-serie") {
             if (this.config.type == "station") {
@@ -79,13 +150,21 @@ class G4Query {
                 let {t0, t1} = this.resolveTime();
                 let {promise, controller} = this.zrepoClient.queryTimeSerie(this.config.variable, t0, t1, this.config.filter, this.config.temporality);
                 let rows = await promise;
+                rows = rows.map(d => ({
+                    time:luxon.DateTime.fromObject(d.localTime, {zone:this.config.tz || "America/Santiago"}).valueOf(),
+                    value:this.extractValue(d, this.config.accum || "avg")
+                }))
+                return rows;
+            } else if (this.config.type == "raster") {
+                let {t0, t1} = this.resolveTime();
+                let url = `${window.g4.getGeoserverURL(this.config.geoserver)}/${this.config.dataSet.code}/${this.config.variable.code}/timeSerie?startTime=${t0.valueOf()}&endTime=${t1.valueOf()}&lat=${this.config.point.lat}&lng=${this.config.point.lng}&level=${this.config.level || 0}`;
+                let rows = await this._getJSON(url);
                 return rows;
             }
         }
     }
 
     resolveTime() {
-        console.log("timeDef", this.config.timeDef);
         let t0 = this.resolveTimeUnit(this.config.timeDef.t0);
         let t1 = this.resolveTimeUnit(this.config.timeDef.t1);
         return {t0, t1}

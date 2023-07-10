@@ -269,5 +269,18 @@ class G4 {
         return station;
     }
 
+    // User Objects Utils
+    async createPoint(lat, lng) {
+        // Buscar capa
+        let layer = window.g4.getLayersFromTop().find(l => l.type == "user-objects");
+        if (!layer) {
+            layer = G4Layer.createFromDefinition({type:"user-objects", name:"Objetos de Usuario"});
+            await window.g4.getActiveGroup().addLayer(layer);
+            await layer.g4init();
+            layer.refresh();
+        }
+        return layer.addDefaultPoint({lat, lng});
+    }
+
 }
 window.g4 = new G4();

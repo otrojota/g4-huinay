@@ -1,7 +1,8 @@
 class TimeSerie extends ZCustomController {
     async onThis_init(options) {
         this.options = options;
-        if (options.type == "create-from-station") await this.createNewFromStation();        
+        if (options.type == "create-from-station") this.createNewFromStation();
+        else if (options.type == "create-from-raster") await this.createNewFromRaster();
         this.callRefresh();
     }
 
@@ -40,7 +41,24 @@ class TimeSerie extends ZCustomController {
         this.q1 = G4Query.createTimeSerie(this.config.serie1);
     }
 
-    configureSerieTimeDef
+    async createNewFromRaster() {
+        console.log("TimeSerie createNewFromRaster", this.options);
+        let rasterMetadata = await window.g4.getGeoserverVariableMetadata(this.options.layer.config.geoserver, this.options.layer.config.dataSet, this.options.layer.config.variable);
+        this.config = {
+            serie1: {
+                type:"raster", 
+                geoserver: this.options.layer.config.geoserver,
+                dataSet: rasterMetadata.dataSet,
+                variable: rasterMetadata.variable,
+                name: rasterMetadata.variable.name,
+                point: this.options.point.config
+            }
+        }
+        let {temporality, timeDef} = G4Query.createDefaultTimeDefForRaster(this.options.layer.dataSet.temporality)
+        this.config.serie1.temporality = temporality;
+        this.config.serie1.timeDef = timeDef;
+        this.q1 = G4Query.createTimeSerie(this.config.serie1);
+    }
 
     callRefresh() {
         if (this.refreshTimer) clearTimeout(this.refreshTimer);
@@ -63,19 +81,9 @@ class TimeSerie extends ZCustomController {
         try {
             if (this.q1) {
                 this.serie1 = await this.q1.execute();
-                this.serie1 = this.serie1.map(d => ({
-                    name: this.config.serie1.name,
-                    time:luxon.DateTime.fromObject(d.localTime, {zone:"America/Santiago"}).valueOf(),
-                    value:this.extractValue(d, this.config.serie1.accum)
-                }))
             }
             if (this.q2) {
                 this.serie2 = await this.q2.execute();
-                this.serie2 = this.serie2.map(d => ({
-                    name: this.config.serie2.name,
-                    time:luxon.DateTime.fromObject(d.localTime, {zone:"America/Santiago"}).valueOf(),
-                    value:this.extractValue(d, this.config.serie2.accum)
-                }))
             }
         } catch(error) {
             console.error(error);
@@ -83,14 +91,6 @@ class TimeSerie extends ZCustomController {
             this.triggerEvent("stopWorking");
         }
         this.repaint();
-    }
-
-    extractValue(d, accum) {
-        if (accum == "avg") return d.value / d.n;
-        if (accum == "min") return d.min;
-        if (accum == "max") return d.max;
-        if (accum == "n") return d.n;
-        throw "Acumulador '" + accum + "' no manejado"
     }
 
     async repaint() {

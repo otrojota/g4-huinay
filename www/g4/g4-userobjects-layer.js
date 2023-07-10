@@ -64,6 +64,7 @@ class G4UserObjectsLayer extends G4Layer {
         this.objects.push(point);
         window.g4.trigger("layer-struct-change", this);
         this.refresh();
+        return point;
     }
     createUserObject(config) {
         if (config.type == "point") {

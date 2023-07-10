@@ -1,5 +1,5 @@
 class TimeSerieSerie extends ZCustomController {
-    onThis_init() {
+    async onThis_init() {
         this.edOrigen.setRows([{
             code:"no", name:"No Usar esta Serie"
         }, {
@@ -16,6 +16,7 @@ class TimeSerieSerie extends ZCustomController {
         }, {
             code:"n", name:"N° Muestras"
         }]);
+        
     }
     async refresh(serieConfig, primaria) {
         console.log("serie refresh", serieConfig);
@@ -31,17 +32,21 @@ class TimeSerieSerie extends ZCustomController {
             await this.refreshStation();
             this.refreshTemporalities();
             this.refreshTimeDefs();
+        } else if (this.edOrigen.value == "raster") {
+            this.panelPunto.show("flex");
+            this.refreshRaster();
+            this.refreshTimeDefs();
         }
     }
 
     onEdOrigen_change() {
         if (this.edOrigen.value == "station") {
-            this.panelEstacion.show();
+            this.panelEstacion.show("flex");
             this.panelPunto.hide();
             this.refresh({type:"station"});
         } else {
             this.panelEstacion.hide();
-            this.panelPunto.show();
+            this.panelPunto.show("flex");
             this.refresh({type:"point"});
         }
     }
@@ -74,13 +79,35 @@ class TimeSerieSerie extends ZCustomController {
         if (!this.config.accum) this.onEdAcumulador_change();
     }
 
+    async refreshRaster() {
+        if (!this.config.dataSet || !this.config.variable) {
+            this.lblVariableRaster.html = `
+                <div class="text-danger">
+                    Debe seleccionar una variable
+                </div>
+            `;    
+            return;
+        }
+        //this.rasterMetadata = await window.g4.getGeoserverVariableMetadata(this.config.geoserver, this.config.dataSet.code, this.config.variable.code);
+        //console.log("metadata", this.rasterMetadata);
+        this.lblVariableRaster.text = this.config.variable.name + " [" + this.config.variable.unit + "]";
+        this.edNameRaster.value = this.config.name;
+    }
+
     refreshTimeDefs() {
         if (!this.config.timeDef) return;
-        this.timeDefInicio.refresh("Tiempo Inicial", this.config.timeDef.level, this.config.timeDef.t0, true, this.edTemporalidad.value);
-        this.timeDefFin.refresh("Tiempo Final", this.config.timeDef.level, this.config.timeDef.t1, false, this.edTemporalidad.value);
+        if (this.edOrigen.value == "station") {
+            this.timeDefInicio.refresh("Tiempo Inicial", this.config.timeDef.level, this.config.timeDef.t0, true, this.edTemporalidad.value);
+            this.timeDefFin.refresh("Tiempo Final", this.config.timeDef.level, this.config.timeDef.t1, false, this.edTemporalidad.value);
+        } else {
+            this.timeDefInicioRaster.refresh("Tiempo Inicial", this.config.timeDef.level, this.config.timeDef.t0, true, this.edTemporalidad.value);
+            this.timeDefFinRaster.refresh("Tiempo Final", this.config.timeDef.level, this.config.timeDef.t1, false, this.edTemporalidad.value);
+        }
     }
 
     onEdName_change() {this.config.name = this.edName.value}
+    onEdNameRaster_change() {this.config.name = this.edNameRaster.value}
+    
     onEdVariable_change() {
         let variable = this.station.variables.find(v => v.code == this.edVariable.value);
         //this.config.variable = {code: r.code, name: r.name, unit: r.unit, temporality: r.temporality},
@@ -109,15 +136,28 @@ class TimeSerieSerie extends ZCustomController {
 
     fetch() {
         if (this.edOrigen.value == "no") return null;
-        try {
-            this.config.timeDef.t0 = this.timeDefInicio.fetch();
-        } catch(error) {
-            throw "Error en el tiempo inicial: " + error;
-        }
-        try {
-            this.config.timeDef.t1 = this.timeDefFin.fetch();
-        } catch(error) {
-            throw "Error en el tiempo final: " + error;
+        if (this.edOrigen.value == "station") {
+            try {
+                this.config.timeDef.t0 = this.timeDefInicio.fetch();
+            } catch(error) {
+                throw "Error en el tiempo inicial: " + error;
+            }
+            try {
+                this.config.timeDef.t1 = this.timeDefFin.fetch();
+            } catch(error) {
+                throw "Error en el tiempo final: " + error;
+            }
+        } else {
+            try {
+                this.config.timeDef.t0 = this.timeDefInicioRaster.fetch();
+            } catch(error) {
+                throw "Error en el tiempo inicial: " + error;
+            }
+            try {
+                this.config.timeDef.t1 = this.timeDefFinRaster.fetch();
+            } catch(error) {
+                throw "Error en el tiempo final: " + error;
+            }
         }
         return this.config;
     }

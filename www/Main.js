@@ -205,6 +205,7 @@ class Main extends ZCustomController {
             if (element.type == "feature") {
                 panels.push({panel:"./details-panels/FeatureProperties", panelOptions:{element}, title:element.layer.name, opened: true})
             } else if (element.type == "value") {
+                element.coords = {lat:e.latlng.lat, lng:e.latlng.lng};
                 values.push(element);
                 panels.push({panel:"./details-panels/ScaleValue", panelOptions:{element}, title:element.layer.name, opened: true})
             } else if (element.type == "vector") {

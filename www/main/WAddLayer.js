@@ -19,8 +19,13 @@ class WAddLayer extends ZDialog {
             this.edCapaEstaciones.disable();
             this.navHeaderVariables.addClass("disabled");
             this.navHeaderVectoriales.addClass("disabled");
+            this.navHeaderEspeciales.addClass("disabled");
             let tabTrigger = new bootstrap.Tab(this.navHeaderEstaciones.view);
             tabTrigger.show();
+        } else if (action == "select-variable") {
+            this.navHeaderEstaciones.addClass("disabled");
+            this.navHeaderVectoriales.addClass("disabled");
+            this.navHeaderEspeciales.addClass("disabled");
         }
         this.edCapaEstaciones.setRows(capasEstaciones, initialLayer);
         setTimeout(_ => this.edSearch.edSearch.view.focus(), 500);
