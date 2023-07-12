@@ -80,6 +80,10 @@ class G4UserObjectsLayer extends G4Layer {
             uo.draw(canvas, map, this.canvasLayer);
         }
     }
+
+    containsObject(id) {
+        return this.objects.findIndex(o => o.id == id) >= 0;
+    }
 }
 
 class G4UserObject {
@@ -89,11 +93,20 @@ class G4UserObject {
     }
     get type() {return this.config.type}
     get name() {return this.config.name}
+    get canMove() {return true}
 
     draw(canvas, map, canvasLayer) {
         throw "draw() no implementado para " + this.type;
     }
     inPoint(lat, lng, canvasPoint) {return false}
+    startDragging(lat, lng) {
+        this.dragging = true;
+    }
+    drag(lat, lng) {} 
+    stopDragging(lat, lng) {
+        this.dragging = false;
+    }
+    isDragging() {return this.dragging}
 }
 
 class G4CompoundUserObject extends G4UserObject {
@@ -113,13 +126,15 @@ class G4Point extends G4UserObject {
         config.radius = config.radius || 10;
     }
     get lat() {return this.config.lat}
+    set lat(l) {this.config.lat = l}
     get lng() {return this.config.lng}
+    set lng(l) {this.config.lng = l}
     get borderStyle() {return this.config.borderStyle}
     get fillStyle() {return this.config.fillStyle}
     get radius() {return this.config.radius}
 
     inPoint(lat, lng, canvasPoint) {
-        return Math.sqrt((canvasPoint.x - this.canvasCenter.x) * (canvasPoint.x - this.canvasCenter.x) + (canvasPoint.y - this.canvasCenter.y) * (canvasPoint.x - this.canvasCenter.x)) <= this.canvasRadius 
+        return Math.sqrt((canvasPoint.x - this.canvasCenter.x) * (canvasPoint.x - this.canvasCenter.x) + (canvasPoint.y - this.canvasCenter.y) * (canvasPoint.y - this.canvasCenter.y)) <= this.canvasRadius 
     }
     draw(canvas, map, canvasLayer) {
         let pixelsRatio = canvasLayer.options.pixelsRatio || window.devicePixelRatio;   
@@ -136,5 +151,10 @@ class G4Point extends G4UserObject {
         ctx.arc(center.x, center.y, radius, 0, 2*Math.PI);
         ctx.fill();
         ctx.stroke();
+    }
+
+    drag(lat, lng) {
+        this.lat = lat;
+        this.lng = lng;
     }
 }

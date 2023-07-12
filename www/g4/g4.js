@@ -272,7 +272,7 @@ class G4 {
     // User Objects Utils
     async createPoint(lat, lng) {
         // Buscar capa
-        let layer = window.g4.getLayersFromTop().find(l => l.type == "user-objects");
+        let layer = this.getLayersFromTop().find(l => l.type == "user-objects");
         if (!layer) {
             layer = G4Layer.createFromDefinition({type:"user-objects", name:"Objetos de Usuario"});
             await window.g4.getActiveGroup().addLayer(layer);
@@ -280,6 +280,14 @@ class G4 {
             layer.refresh();
         }
         return layer.addDefaultPoint({lat, lng});
+    }
+
+    getLayerFromUserObject(id) {
+        let layers = this.getLayersFromTop().filter(l => l.type == "user-objects");
+        for (let l of layers) {
+            if (l.containsObject(id)) return l;
+        }
+        return null;
     }
 
 }

@@ -23,35 +23,37 @@
                         </button>
                     </div>
                 </div>
-                <div class="row mt-2">
-                    <div class="col-3">
-                        <label class="form-label mt-2">Graficar Variable</label>
+                <div id="panelConVariable">
+                    <div class="row mt-2">
+                        <div class="col-3">
+                            <label class="form-label mt-2">Graficar Variable</label>
+                        </div>
+                        <div class="col-9">
+                            <select id="edVariable" class="form-select" data-z-id-field="code" data-z-label-field="name"></select>
+                        </div>
                     </div>
-                    <div class="col-9">
-                        <select id="edVariable" class="form-select" data-z-id-field="code" data-z-label-field="name"></select>
+                    <div class="row mt-2">
+                        <div class="col-3">
+                            <label class="form-label mt-2">Nombre de la Serie</label>
+                        </div>
+                        <div class="col-9">
+                            <input id="edName" class="form-control" data-z-autochange-delay="300">
+                        </div>
                     </div>
+                    <div class="row mt-2">
+                        <div class="col-3">
+                            <label class="form-label mt-2">Mostrar Valor</label>
+                        </div>
+                        <div class="col-3">
+                            <select id="edAcumulador" class="form-select" data-z-id-field="code" data-z-label-field="name"></select>
+                        </div>
+                        <div class="col-6">
+                            <select id="edTemporalidad" class="form-select" data-z-id-field="code" data-z-label-field="name"></select>
+                        </div>
+                    </div>
+                    <div id="timeDefInicio" data-z-component="./../TimeDef"></div>
+                    <div id="timeDefFin" data-z-component="./../TimeDef"></div>
                 </div>
-                <div class="row mt-2">
-                    <div class="col-3">
-                        <label class="form-label mt-2">Nombre de la Serie</label>
-                    </div>
-                    <div class="col-9">
-                        <input id="edName" class="form-control" data-z-autochange-delay="300">
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-3">
-                        <label class="form-label mt-2">Mostrar Valor</label>
-                    </div>
-                    <div class="col-3">
-                        <select id="edAcumulador" class="form-select" data-z-id-field="code" data-z-label-field="name"></select>
-                    </div>
-                    <div class="col-6">
-                        <select id="edTemporalidad" class="form-select" data-z-id-field="code" data-z-label-field="name"></select>
-                    </div>
-                </div>
-                <div id="timeDefInicio" data-z-component="./../TimeDef"></div>
-                <div id="timeDefFin" data-z-component="./../TimeDef"></div>
             </div>
         </div>
         <div id="panelPunto" class="row">
@@ -68,16 +70,26 @@
                         </button>
                     </div>
                 </div>
-                <div class="row mt-2">
-                    <div class="col-3">
-                        <label class="form-label mt-2">Nombre de la Serie</label>
+                <div id="panelConVariableRaster">
+                    <div id="filaNivel" class="row mt-2">
+                        <div class="col-3">
+                            <label class="form-label mt-2">Nivel</label>
+                        </div>
+                        <div class="col-9">
+                            <select id="edLevel" class="form-select" data-z-id-field="idx" data-z-label-field="name"></select>
+                        </div>
                     </div>
-                    <div class="col-9">
-                        <input id="edNameRaster" class="form-control" data-z-autochange-delay="300">
+                    <div class="row mt-2">
+                        <div class="col-3">
+                            <label class="form-label mt-2">Nombre de la Serie</label>
+                        </div>
+                        <div class="col-9">
+                            <input id="edNameRaster" class="form-control" data-z-autochange-delay="300">
+                        </div>
                     </div>
+                    <div id="timeDefInicioRaster" data-z-component="./../TimeDef"></div>
+                    <div id="timeDefFinRaster" data-z-component="./../TimeDef"></div>
                 </div>
-                <div id="timeDefInicioRaster" data-z-component="./../TimeDef"></div>
-                <div id="timeDefFinRaster" data-z-component="./../TimeDef"></div>
             </div>
         </div>
     </div>

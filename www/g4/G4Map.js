@@ -11,8 +11,16 @@ class G4Map extends ZCustomController {
         this.map.fitBounds(bounds);
         this.map.on("zoomend", _ => this.callTriggerMapChange());
         this.map.on("moveend", _ => this.callTriggerMapChange());
-        this.map.on("click", e => window.g4.trigger("map-click", e));
+        this.map.on("click", e => {
+            if (this.ignoreNextClick) {
+                this.ignoreNextClick = false;
+            } else {
+                window.g4.trigger("map-click", e)
+            }
+        });
         this.map.on("mousemove", e => window.g4.trigger("map-mouse-move", e));
+        this.map.on("mousedown", e => window.g4.trigger("map-mouse-down", e));
+        this.map.on("mouseup", e => window.g4.trigger("map-mouse-up", e));
     }
 
     selectBaseMap(name) {
@@ -52,6 +60,21 @@ class G4Map extends ZCustomController {
     }
     getActiveScale(id) {
         return (this.interactionsLayer.activeScales || []).find(s => (s.id == id));
+    }
+
+    setCursor(cursor) {
+        if (cursor) {
+            this.mapContainer.view.style.setProperty("cursor", cursor);
+        } else {
+            this.mapContainer.view.style.removeProperty("cursor");
+        }
+    }
+
+    disablePanning() {
+        this.map.dragging.disable();
+    }
+    enablePanning() {
+        this.map.dragging.enable();
     }
 }
 ZVC.export(G4Map);

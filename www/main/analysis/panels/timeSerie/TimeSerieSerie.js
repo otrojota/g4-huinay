@@ -19,7 +19,6 @@ class TimeSerieSerie extends ZCustomController {
         
     }
     async refresh(serieConfig, primaria) {
-        console.log("serie refresh", serieConfig);
         this.config = serieConfig || {};
         this.primaria = primaria;
         if (!this.config.type) this.edOrigen.value = "no";
@@ -62,6 +61,7 @@ class TimeSerieSerie extends ZCustomController {
 
     async refreshStation() {
         if (!this.config.station) {
+            this.panelConVariable.hide();
             this.lblEstacion.html = `
                 <div class="text-danger">
                     Debe seleccionar una estación
@@ -69,6 +69,7 @@ class TimeSerieSerie extends ZCustomController {
             `;    
             return;
         }
+        this.panelConVariable.show();
         this.station = await window.g4.getEstacion(this.config.group.code, this.config.station.code);
         let txt = "Estación '" + this.station.name + "' desde '" + this.station.group.name + "'";
         this.lblEstacion.text = txt;        
@@ -79,19 +80,28 @@ class TimeSerieSerie extends ZCustomController {
         if (!this.config.accum) this.onEdAcumulador_change();
     }
 
-    async refreshRaster() {
+    refreshRaster() {
         if (!this.config.dataSet || !this.config.variable) {
+            this.panelConVariableRaster.hide();
             this.lblVariableRaster.html = `
                 <div class="text-danger">
                     Debe seleccionar una variable
                 </div>
             `;    
+            this.filaNivel.hide();
             return;
         }
-        //this.rasterMetadata = await window.g4.getGeoserverVariableMetadata(this.config.geoserver, this.config.dataSet.code, this.config.variable.code);
-        //console.log("metadata", this.rasterMetadata);
+        this.panelConVariableRaster.show();
         this.lblVariableRaster.text = this.config.variable.name + " [" + this.config.variable.unit + "]";
         this.edNameRaster.value = this.config.name;
+        if (this.config.variable.levels) {
+            this.edLevel.setRows(this.config.variable.levels.map(
+                (l, idx) => ({idx, name:l})
+            ), this.config.level)
+            this.filaNivel.show("flex");
+        } else {
+            this.filaNivel.hide();
+        }
     }
 
     refreshTimeDefs() {
@@ -133,6 +143,11 @@ class TimeSerieSerie extends ZCustomController {
         this.config.timeDef = timeDef;
         this.refreshTimeDefs();
     }
+    onEdLevel_change() {
+        this.config.level = parseInt(this.edLevel.value);
+        this.config.name = this.config.variable.name + " - " + this.config.variable.levels[this.config.level];
+        this.edNameRaster.value = this.config.name;
+    }
 
     fetch() {
         if (this.edOrigen.value == "no") return null;
@@ -163,15 +178,36 @@ class TimeSerieSerie extends ZCustomController {
     }
 
     onCmdSeleccionarEstacion_click() {
+        console.log("condig1", this.config.timeDef);
         this.showDialog("./../../WSelectStation", {}, ({group, station, searchPeriod, stationField, timeZone, zreposerver}) => {
-            console.log("station", station);
             this.config.station = station;
             this.config.group = group;
             this.config.searchPeriod = searchPeriod;
             this.config.stationField = stationField;
             this.config.timeZone = timeZone;
             this.config.zreposerver = zreposerver;
+            console.log("condig", this.config.timeDef);
             this.refreshStation()
+            console.log("condig2", this.config.timeDef);
+            console.log("condig3", this.config);
+        })
+    }
+
+    onCmdSeleccionarRaster_click() {
+        this.showDialog("main/WAddLayer", {action:"select-variable"}, async variable => {
+            let oldTemporality = this.config.dataSet?this.config.dataSet.temporality:null;
+            let rasterMetadata = await window.g4.getGeoserverVariableMetadata(variable.config.geoserver, variable.config.dataSet, variable.config.variable);
+            this.config.geoserver = variable.config.geoserver;
+            this.config.dataSet = rasterMetadata.dataSet;
+            this.config.variable = rasterMetadata.variable;
+            this.config.name = rasterMetadata.variable.name + (rasterMetadata.variable.levels?(" - " + rasterMetadata.variable.levels[0]):"");
+            this.config.level = 0;            
+            this.refreshRaster();
+            let {temporality, timeDef} = G4Query.createDefaultTimeDefForRaster(rasterMetadata.dataSet.temporality)
+            if (!this.config.timeDef || oldTemporality != temporality) {
+                this.config.timeDef = timeDef;
+                this.refreshTimeDefs();
+            }
         })
     }
 }

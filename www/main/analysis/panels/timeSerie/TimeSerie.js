@@ -44,13 +44,15 @@ class TimeSerie extends ZCustomController {
     async createNewFromRaster() {
         console.log("TimeSerie createNewFromRaster", this.options);
         let rasterMetadata = await window.g4.getGeoserverVariableMetadata(this.options.layer.config.geoserver, this.options.layer.config.dataSet, this.options.layer.config.variable);
+        let level = this.options.layer.levelIndex || 0;
         this.config = {
             serie1: {
                 type:"raster", 
                 geoserver: this.options.layer.config.geoserver,
                 dataSet: rasterMetadata.dataSet,
                 variable: rasterMetadata.variable,
-                name: rasterMetadata.variable.name,
+                name: rasterMetadata.variable.name + (rasterMetadata.variable.levels?(" - " + rasterMetadata.variable.levels[level]):""),
+                level,
                 point: this.options.point.config
             }
         }

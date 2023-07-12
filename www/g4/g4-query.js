@@ -34,6 +34,7 @@ class G4Query {
             config.geoserver = serieConfig.geoserver;
             config.dataSet = serieConfig.dataSet;
             config.variable = serieConfig.variable;
+            config.level = serieConfig.level;
             config.temporality = serieConfig.temporality;
             config.timeDef = serieConfig.timeDef;
             config.point = serieConfig.point;

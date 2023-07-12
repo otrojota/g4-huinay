@@ -24,6 +24,17 @@ L.G4InteractionsOverlay = L.CanvasOverlay.extend({
     onRemove: function(map) {
         L.CanvasOverlay.prototype.onRemove.call(this, map);        
     },
+
+    onMoveEnd: function() {
+        this.setOpacity(this._oldOpacity);
+        L.CanvasOverlay.prototype.onMoveEnd.call(this);
+    },
+    onMoveStart: function() {
+        this._oldOpacity = this.options.opacity;
+        this.setOpacity(0);
+        L.CanvasOverlay.prototype.onMoveStart.call(this);
+    },
+
     _draw() {
         try {
             let pixelsRatio = this.options.pixelsRatio || window.devicePixelRatio;

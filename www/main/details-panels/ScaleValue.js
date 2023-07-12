@@ -111,7 +111,7 @@ class ScaleValue extends ZCustomController {
             }
         }
         let point;
-        if (found.length) point = found[0];
+        if (found.length) point = found[0].object;
         else point = await window.g4.createPoint(this.element.coords.lat, this.element.coords.lng);
         await window.g4.analysisController.openAnalysis("time-serie", {
             type: "create-from-raster",

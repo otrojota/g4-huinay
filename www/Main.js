@@ -61,6 +61,8 @@ class Main extends ZCustomController {
 
         window.g4.on("map-click", e => this.onMapClick(e));
         window.g4.on("map-mouse-move", e => this.onMapMouseMove(e));
+        window.g4.on("map-mouse-down", e => this.onMapMouseDown(e));
+        window.g4.on("map-mouse-up", e => this.onMapMouseUp(e));
 
         this.rightOffsetCanvas = new bootstrap.Offcanvas(this.rightPanel.view);
 
@@ -183,11 +185,57 @@ class Main extends ZCustomController {
     }
     onMapMouseMove(e) {
         this.showLatLng(e.latlng.lat, e.latlng.lng);
+        if (this.draggingObject) {
+            this.draggingObject.drag(e.latlng.lat, e.latlng.lng);
+            this.dragged = true;
+            this.draggingLayer.redraw();
+            return;
+        }
         if (this.objectAtPointTimer) clearTimeout(this.objectAtPointTimer);
         this.objectAtPointTimer = setTimeout(_ => {
             this.objectAtPointTimer = null;
-            this.showObjectAtPoint(e.latlng.lat, e.latlng.lng);
-        }, 100);
+            this.showObjectAtPoint(e.latlng.lat, e.latlng.lng);            
+        }, 50);
+
+        let layers = window.g4.getLayersFromTop();
+        let found = [];
+        for (let l of layers) {
+            let element = l.elementAtPoint(e.latlng.lat, e.latlng.lng);
+            if (element) {
+                if (Array.isArray(element)) found.push(...element);
+                else found.push(element); 
+            }
+        }
+        found = found.filter(e => e.type == "user-object" && e.object.canMove);
+        let userObject = found.length?found[0].object:null;
+        if (userObject) {
+            if (!this.objectToMove || this.objectToMove.id != userObject.id) {
+                this.map.setCursor("crosshair");
+                this.objectToMove = userObject;
+            }
+        } else if (this.objectToMove) {
+            this.map.setCursor();
+            this.objectToMove = null;
+        }
+    }
+    onMapMouseDown(e) {
+        if (this.objectToMove) {
+            this.dragged = false;
+            this.draggingObject = this.objectToMove;
+            this.map.disablePanning();
+            this.draggingLayer = window.g4.getLayerFromUserObject(this.draggingObject.id);
+            console.log("draggingLayr", this.draggingLayer, this.draggingObject.id);
+            this.draggingObject.startDragging(e.latlng.lat, e.latlng.lng);
+        }
+    }
+    onMapMouseUp(e) {
+        this.map.enablePanning();
+        if (this.draggingObject) {
+            this.draggingObject.stopDragging(e.latlng.lat, e.latlng.lng);
+            this.draggingObject = null;
+            this.draggingLayer = null;
+            if (this.dragged) this.map.ignoreNextClick = true;
+        }
     }
     async onMapClick(e) {
         this.lastClickedEvent = e;
@@ -245,7 +293,7 @@ class Main extends ZCustomController {
             window.g4.mapController.setObjectAtPoint();
             return;
         }
-        let st = "", values = [];        
+        let st = "", values = [], userObject = null;        
         for (let e of found) {
             if (e.type == "feature") {
                 if (st.length) st += "\n";
@@ -275,9 +323,11 @@ class Main extends ZCustomController {
             } else if (e.type == "user-object") {
                 if (st.length) st += "\n";
                 st += "Objeto: " + e.name;
+                if (!userObject) userObject = e.object;
             }
         }
         window.g4.mapController.setObjectAtPoint(lat, lng, st, values);
+        return userObject;
     }
 
     callRefreshScalesAndProperties() {
